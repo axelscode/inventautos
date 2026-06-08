@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INVENTAUTOS - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h1>INVENTAUTOS</h1>
+            <h2>Acceso a tu cuenta</h2>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST">
+                <div class="input-group">
+                    <label>Usuario ID:</label>
+                    <input type="text" name="usuario_id" required autofocus>
+                </div>
+                
+                <div class="input-group">
+                    <label>Contraseña:</label>
+                    <input type="password" name="contrasena" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Código:</label>
+                    <input type="text" name="codigo" required placeholder="Código de seguridad">
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn-entrar">Entrar</button>
+                    <button type="reset" class="btn-cancelar">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

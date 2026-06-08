@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>INVENTAUTOS - Gestión de Usuarios</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="header">
+        <h1>Gestión de Usuarios</h1>
+        <a href="{{ url_for('inventario') }}" class="btn-volver">← Volver al Inventario</a>
+    </div>
+    
+    <div class="form-crear-usuario">
+        <h3>Crear nuevo usuario</h3>
+        <form method="POST" action="{{ url_for('crear_usuario') }}">
+            <input type="text" name="usuario_id" placeholder="Usuario ID" required>
+            <input type="password" name="contrasena" placeholder="Contraseña" required>
+            <select name="rol">
+                <option value="NORMAL">NORMAL</option>
+                <option value="ADMIN">ADMIN</option>
+            </select>
+            <button type="submit">Crear Usuario</button>
+        </form>
+    </div>
+    
+    <div class="table-container">
+        <h3>Usuarios del sistema</h3>
+        <table>
+            <thead><tr><th>ID</th><th>Usuario</th><th>Rol</th><th>Fecha Creación</th><th>Acciones</th></tr></thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr>
+                    <td>{{ u.id }}</td>
+                    <td>{{ u.usuario_id }}</td>
+                    <td class="rol-{{ u.rol.lower() }}">{{ u.rol }}</td>
+                    <td>{{ u.fecha_creacion }}</td>
+                    <td>
+                        <a href="{{ url_for('eliminar_usuario', id=u.id) }}" onclick="return confirm('¿Eliminar este usuario?')" class="btn-eliminar">Eliminar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INVENTAUTOS - Inventario</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Estilos específicos para la tabla */
+        .table-wrapper {
+            overflow-x: auto;
+            max-width: 100%;
+        }
+        
+        table {
+            min-width: 100%;
+            width: max-content;
+        }
+        
+        @media (min-width: 1400px) {
+            table {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚗 INVENTAUTOS</h1>
+        <div>
+            <span>👤 {{ session.usuario_id }} ({{ rol }})</span>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Salir</a>
+        </div>
+    </div>
+    
+    <div class="toolbar">
+        {% if rol == 'ADMIN' %}
+            <a href="{{ url_for('agregar_vehiculo') }}" class="btn-agregar">+ Agregar</a>
+            <a href="{{ url_for('usuarios') }}" class="btn-usuarios">👥 Usuarios</a>
+        {% endif %}
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="table-container">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Chassis</th>
+                        <th>Status</th>
+                        <th>Marca</th>
+                        <th>Modelo</th>
+                        <th>Tipo</th>
+                        <th>Año</th>
+                        <th>Color</th>
+                        <th>Precio</th>
+                        <th>Precio C</th>
+                        <th>Precio F</th>
+                        <th>Locación</th>
+                        <th>País</th>
+                        <th>BL</th>
+                        {% if rol == 'ADMIN' %}
+                            <th>Acciones</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for v in vehiculos %}
+                    <tr>
+                        <td>{{ v.chassis }}</td>
+                        <td><span class="status-disponible">{{ v.estatus }}</span></td>
+                        <td>{{ v.marca }}</td>
+                        <td>{{ v.modelo }}</td>
+                        <td>{{ v.tipo }}</td>
+                        <td>{{ v.ano }}</td>
+                        <td>{{ v.color }}</td>
+                        <td>${{ '{:,.0f}'.format(v.precio) }}</td>
+                        <td>${{ '{:,.0f}'.format(v.precio_contado) }}</td>
+                        <td>${{ '{:,.0f}'.format(v.precio_financiamiento) }}</td>
+                        <td>{{ v.locacion[:20] }}{% if v.locacion and v.locacion|length > 20 %}...{% endif %}</td>
+                        <td>{{ v.pais }}</td>
+                        <td>{{ v.bl[:12] }}{% if v.bl and v.bl|length > 12 %}...{% endif %}</td>
+                        {% if rol == 'ADMIN' %}
+                        <td>
+                            <a href="{{ url_for('editar_vehiculo', id=v.id) }}" class="btn-editar">Editar</a>
+                            <a href="{{ url_for('eliminar_vehiculo', id=v.id) }}" class="btn-eliminar" onclick="return confirm('¿Eliminar?')">Eliminar</a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
