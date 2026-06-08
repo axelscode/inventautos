@@ -1,0 +1,116 @@
+-- phpMyAdmin SQL Dump
+-- version 5.1.2
+-- https://www.phpmyadmin.net/
+--
+-- Servidor: localhost:3306
+-- Tiempo de generación: 08-06-2026 a las 16:52:36
+-- Versión del servidor: 5.7.24
+-- Versión de PHP: 8.3.1
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Base de datos: `inventautos_db`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `usuarios`
+--
+
+CREATE TABLE `usuarios` (
+  `id` int(11) NOT NULL,
+  `usuario_id` varchar(50) NOT NULL,
+  `contrasena` varchar(255) NOT NULL,
+  `rol` enum('ADMIN','NORMAL') DEFAULT 'NORMAL',
+  `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Volcado de datos para la tabla `usuarios`
+--
+
+INSERT INTO `usuarios` (`id`, `usuario_id`, `contrasena`, `rol`, `fecha_creacion`) VALUES
+(1, 'admin', 'admin123', 'ADMIN', '2026-06-08 20:00:04'),
+(2, 'usuario1', 'user123', 'NORMAL', '2026-06-08 20:00:05');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `vehiculos`
+--
+
+CREATE TABLE `vehiculos` (
+  `id` int(11) NOT NULL,
+  `chassis` varchar(50) NOT NULL,
+  `estatus` varchar(20) DEFAULT 'DISPONIBLE',
+  `marca` varchar(50) NOT NULL,
+  `modelo` varchar(50) NOT NULL,
+  `tipo` varchar(50) DEFAULT NULL,
+  `ano` int(11) DEFAULT NULL,
+  `color` varchar(30) DEFAULT NULL,
+  `precio` decimal(15,2) DEFAULT '0.00',
+  `precio_contado` decimal(15,2) DEFAULT '0.00',
+  `precio_financiamiento` decimal(15,2) DEFAULT '0.00',
+  `locacion` varchar(100) DEFAULT NULL,
+  `pais` varchar(50) DEFAULT 'JAPON',
+  `bl` varchar(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Volcado de datos para la tabla `vehiculos`
+--
+
+INSERT INTO `vehiculos` (`id`, `chassis`, `estatus`, `marca`, `modelo`, `tipo`, `ano`, `color`, `precio`, `precio_contado`, `precio_financiamiento`, `locacion`, `pais`, `bl`) VALUES
+(1, 'MXPH10-2027887', 'DISPONIBLE', 'TOYOTA', 'YARIS', 'AUTOMOVIL', 2021, 'GRIS', '0.00', '0.00', '0.00', 'JAPON', 'JAPON', 'S00348455'),
+(2, 'MXPH10-2019696', 'DISPONIBLE', 'TOYOTA', 'YARIS', 'AUTOMOVIL', 2021, 'GRIS', '0.00', '0.00', '0.00', 'JAPON', 'JAPON', 'S00344704'),
+(3, 'NHP130-4023111', 'DISPONIBLE', 'TOYOTA', 'VITZ', 'AUTOMOVIL', 2021, 'BLANCO', '850000.00', '785000.00', '0.00', '23/03/2026 SADA', 'JAPON', 'S00336965'),
+(4, 'DA17V-421911', 'DISPONIBLE', 'SUZUKI', 'EVERY', 'MINIVAN', 2020, 'BLANCO', '0.00', '0.00', '0.00', 'JAPON', 'JAPON', 'S00346769');
+
+--
+-- Índices para tablas volcadas
+--
+
+--
+-- Indices de la tabla `usuarios`
+--
+ALTER TABLE `usuarios`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `usuario_id` (`usuario_id`);
+
+--
+-- Indices de la tabla `vehiculos`
+--
+ALTER TABLE `vehiculos`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `chassis` (`chassis`);
+
+--
+-- AUTO_INCREMENT de las tablas volcadas
+--
+
+--
+-- AUTO_INCREMENT de la tabla `usuarios`
+--
+ALTER TABLE `usuarios`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT de la tabla `vehiculos`
+--
+ALTER TABLE `vehiculos`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
