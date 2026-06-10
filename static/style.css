@@ -233,3 +233,82 @@ td {
     background: #f8d7da;
     color: #721c24;
 }
+
+/* ========== FILTROS DE BÚSQUEDA ========== */
+.filtros {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.filtros form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filtros input, .filtros select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.filtros button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* ========== DASHBOARD ========== */
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.card h3 {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.card .numero {
+    font-size: 28px;
+    font-weight: bold;
+    color: #667eea;
+}
+
+/* ========== RESPONSIVE MEJORADO ========== */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .toolbar {
+        text-align: center;
+    }
+    
+    .btn-agregar, .btn-usuarios {
+        display: inline-block;
+        margin: 5px;
+    }
+    
+    th, td {
+        font-size: 10px;
+        padding: 6px 3px;
+    }
+}

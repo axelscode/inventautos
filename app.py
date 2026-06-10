@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from functools import wraps
 import sqlite3
 import os
+import pandas as pd
+from io import BytesIO
+from flask import send_file
 
 app = Flask(__name__)
 app.secret_key = 'inventautos_secret_key_2024'
@@ -142,12 +145,82 @@ def logout():
 @app.route('/inventario')
 @login_required
 def inventario():
+    buscar = request.args.get('buscar', '')
+    marca = request.args.get('marca', '')
+    estatus = request.args.get('estatus', '')
+    
+    query = "SELECT * FROM vehiculos WHERE 1=1"
+    params = []
+    
+    if buscar:
+        query += " AND (chassis LIKE ? OR marca LIKE ? OR modelo LIKE ?)"
+        params.extend([f'%{buscar}%', f'%{buscar}%', f'%{buscar}%'])
+    if marca:
+        query += " AND marca = ?"
+        params.append(marca)
+    if estatus:
+        query += " AND estatus = ?"
+        params.append(estatus)
+    
+    query += " ORDER BY id DESC"
+    
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM vehiculos ORDER BY id DESC")
+    cursor.execute(query, params)
     vehiculos = cursor.fetchall()
     conn.close()
     return render_template('inventario.html', vehiculos=vehiculos, rol=session.get('rol'))
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT COUNT(*) as total FROM vehiculos")
+    total_vehiculos = cursor.fetchone()['total']
+    
+    cursor.execute("SELECT COUNT(*) as total FROM vehiculos WHERE estatus = 'DISPONIBLE'")
+    disponibles = cursor.fetchone()['total']
+    
+    cursor.execute("SELECT COUNT(*) as total FROM vehiculos WHERE estatus = 'VENDIDO'")
+    vendidos = cursor.fetchone()['total']
+    
+    cursor.execute("SELECT SUM(precio) as total FROM vehiculos")
+    valor_total = cursor.fetchone()['total'] or 0
+    
+    cursor.execute("""
+        SELECT marca, COUNT(*) as total 
+        FROM vehiculos 
+        GROUP BY marca 
+        ORDER BY total DESC 
+        LIMIT 5
+    """)
+    top_marcas = cursor.fetchall()
+    
+    conn.close()
+    
+    return render_template('dashboard.html', 
+                         total_vehiculos=total_vehiculos,
+                         disponibles=disponibles,
+                         vendidos=vendidos,
+                         valor_total=valor_total,
+                         top_marcas=top_marcas)
+
+@app.route('/exportar_excel')
+@login_required
+@admin_required
+def exportar_excel():
+    conn = get_db()
+    df = pd.read_sql_query("SELECT * FROM vehiculos", conn)
+    conn.close()
+    
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Inventario')
+    
+    output.seek(0)
+    return send_file(output, download_name='inventario.xlsx', as_attachment=True)
 
 @app.route('/agregar_vehiculo', methods=['GET', 'POST'])
 @login_required

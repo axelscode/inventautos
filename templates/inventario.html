@@ -40,6 +40,23 @@
             <a href="{{ url_for('usuarios') }}" class="btn-usuarios">👥 Usuarios</a>
         {% endif %}
     </div>
+
+    <div class="filtros">
+    <form method="GET" action="{{ url_for('inventario') }}">
+        <input type="text" name="buscar" placeholder="Buscar por chassis, marca, modelo..." value="{{ request.args.get('buscar', '') }}">
+        <select name="marca">
+            <option value="">Todas las marcas</option>
+            <option value="TOYOTA">TOYOTA</option>
+            <option value="NISSAN">NISSAN</option>
+        </select>
+        <select name="estatus">
+            <option value="">Todos</option>
+            <option value="DISPONIBLE">Disponible</option>
+            <option value="VENDIDO">Vendido</option>
+        </select>
+        <button type="submit">Buscar</button>
+    </form>
+</div>
     
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}

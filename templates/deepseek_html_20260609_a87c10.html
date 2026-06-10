@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - INVENTAUTOS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Dashboard INVENTAUTOS</h1>
+        <div>
+            <span>👤 {{ session.usuario_id }}</span>
+            <a href="{{ url_for('inventario') }}" class="btn-logout">← Inventario</a>
+        </div>
+    </div>
+    
+    <div class="dashboard-cards">
+        <div class="card">
+            <h3>Total Vehículos</h3>
+            <div class="numero">{{ total_vehiculos }}</div>
+        </div>
+        <div class="card">
+            <h3>Disponibles</h3>
+            <div class="numero">{{ disponibles }}</div>
+        </div>
+        <div class="card">
+            <h3>Vendidos</h3>
+            <div class="numero">{{ vendidos }}</div>
+        </div>
+        <div class="card">
+            <h3>Valor Inventario</h3>
+            <div class="numero">${{ '{:,.0f}'.format(valor_total) }}</div>
+        </div>
+    </div>
+    
+    <div class="table-container">
+        <h3>Top 5 Marcas</h3>
+        <table>
+            <thead><tr><th>Marca</th><th>Cantidad</th></thead>
+            <tbody>
+                {% for marca in top_marcas %}
+                <tr><td>{{ marca.marca }}</td><td>{{ marca.total }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
