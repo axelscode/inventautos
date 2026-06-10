@@ -477,5 +477,26 @@ def eliminar_usuario(id):
     flash('Usuario eliminado correctamente', 'success')
     return redirect(url_for('usuarios'))
 
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    import socket
+    try:
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        print("\n" + "="*50)
+        print("🚗 INVENTAUTOS - Servidor iniciado")
+        print("="*50)
+        print(f"📍 Local:   http://localhost:5000")
+        print(f"📍 Red:     http://{local_ip}:5000")
+        print("\n📱 PARA ACCEDER DESDE CELULAR:")
+        print(f"   1. Conecta tu celular al mismo WiFi")
+        print(f"   2. Abre el navegador en: http://{local_ip}:5000")
+        print("="*50 + "\n")
+    except:
+        print("Servidor iniciado en http://localhost:5000")
+    
+    app.run(debug=True, host='0.0.0.0', port=5000)
+    
+
+#if __name__ == '__main__':
+ #   app.run(debug=True, port=5000)

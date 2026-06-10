@@ -208,6 +208,57 @@ body.dark-mode .status-disponible {
     font-size: 12px;
 }
 
+/* Vista en celular */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .header > div {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .toolbar {
+        text-align: center;
+    }
+    
+    .toolbar a {
+        display: inline-block;
+        margin: 5px;
+    }
+    
+    .filtros form {
+        flex-direction: column;
+    }
+    
+    .filtros input,
+    .filtros select,
+    .btn-buscar,
+    .btn-limpiar {
+        width: 100%;
+    }
+    
+    table {
+        font-size: 10px;
+    }
+    
+    th, td {
+        padding: 4px 2px;
+    }
+    
+    .btn-editar, .btn-eliminar {
+        padding: 2px 6px;
+        font-size: 9px;
+    }
+    
+    .stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+}
+
 .alert-success { background: #d4edda; color: #155724; }
 .alert-error { background: #f8d7da; color: #721c24; }
 
