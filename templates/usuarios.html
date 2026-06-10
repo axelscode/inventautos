@@ -4,6 +4,52 @@
     <meta charset="UTF-8">
     <title>INVENTAUTOS - Gestión de Usuarios</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- Theme Toggle en el header -->
+<div class="theme-switch-wrapper">
+    <span class="theme-label">🌙</span>
+    <label class="theme-switch">
+        <input type="checkbox" id="theme-toggle">
+        <span class="slider"></span>
+    </label>
+    <span class="theme-label">☀️</span>
+</div>
+
+<script>
+    // Función para cambiar tema
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }
+    
+    // Función para toggle
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        if (currentTheme === 'dark') {
+            setTheme('light');
+        } else {
+            setTheme('dark');
+        }
+    }
+    
+    // Inicializar tema desde localStorage
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        // Actualizar checkbox
+        const toggle = document.getElementById('theme-toggle');
+        if (toggle && savedTheme === 'dark') {
+            toggle.checked = true;
+        }
+    }
+    
+    // Agregar event listener
+    const toggle = document.getElementById('theme-toggle');
+    if (toggle) {
+        toggle.addEventListener('change', toggleTheme);
+    }
+</script>
+
 </head>
 <body>
     <div class="header">

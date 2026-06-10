@@ -5,100 +5,40 @@
     box-sizing: border-box;
 }
 
+/* Tema Claro (default) */
+:root {
+    --bg-body: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-card: #ffffff;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --border-color: #e0e0e0;
+    --table-header: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --btn-buscar: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Tema Oscuro */
+body.dark-mode {
+    --bg-body: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    --bg-card: #2d2d44;
+    --text-primary: #e0e0e0;
+    --text-secondary: #aaaaaa;
+    --border-color: #404060;
+    --table-header: linear-gradient(135deg, #3d3d5c 0%, #2d2d44 100%);
+    --btn-buscar: linear-gradient(135deg, #3d3d5c 0%, #2d2d44 100%);
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--bg-body);
     min-height: 100vh;
     padding: 10px;
     overflow-x: hidden;
-}
-
-/* ========== PANTALLA DE LOGIN ========== */
-.login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    margin: -10px;
-}
-
-.login-box {
-    background: white;
-    padding: 40px;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    width: 400px;
-}
-
-.login-box h1 {
-    color: #667eea;
-    margin-bottom: 10px;
-    text-align: center;
-    font-size: 32px;
-}
-
-.login-box h2 {
-    color: #555;
-    margin-bottom: 30px;
-    text-align: center;
-    font-size: 18px;
-}
-
-.input-group {
-    margin-bottom: 20px;
-}
-
-.input-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: #333;
-    font-weight: 600;
-    font-size: 14px;
-}
-
-.input-group input {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 14px;
-}
-
-.input-group input:focus {
-    outline: none;
-    border-color: #667eea;
-}
-
-.button-group {
-    display: flex;
-    gap: 15px;
-    margin-top: 30px;
-}
-
-.btn-entrar, .btn-cancelar {
-    flex: 1;
-    padding: 12px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.btn-entrar {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-.btn-cancelar {
-    background: #f5f5f5;
-    color: #666;
+    transition: all 0.3s ease;
 }
 
 /* ========== HEADER ========== */
 .header {
-    background: white;
+    background: var(--bg-card);
     padding: 12px 20px;
     border-radius: 12px;
     margin-bottom: 12px;
@@ -114,13 +54,6 @@ body {
     font-size: 18px;
 }
 
-.user-info span {
-    background: #f0f0f0;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-}
-
 .btn-logout {
     background: #dc3545;
     color: white;
@@ -130,8 +63,9 @@ body {
     font-size: 12px;
 }
 
+/* ========== TOOLBAR ========== */
 .toolbar {
-    background: white;
+    background: var(--bg-card);
     padding: 10px 20px;
     border-radius: 12px;
     margin-bottom: 12px;
@@ -157,9 +91,73 @@ body {
     color: white;
 }
 
-/* ========== TABLA COMPACTA - SIN SCROLL ========== */
+/* ========== FILTROS ========== */
+.filtros {
+    background: var(--bg-card);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.filtros form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filtros input, .filtros select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 13px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.filtros input {
+    flex: 2;
+    min-width: 200px;
+}
+
+.filtros select {
+    flex: 1;
+    min-width: 120px;
+}
+
+.btn-buscar {
+    background: var(--btn-buscar);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.btn-limpiar {
+    background: #6c757d;
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+}
+
+.resultados-info {
+    background: #e3f2fd;
+    padding: 8px 15px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+body.dark-mode .resultados-info {
+    background: #1e3a5f;
+    color: #e0e0e0;
+}
+
+/* ========== TABLA ========== */
 .table-container {
-    background: white;
+    background: var(--bg-card);
     border-radius: 12px;
     padding: 10px;
     overflow-x: auto;
@@ -169,35 +167,36 @@ table {
     width: 100%;
     border-collapse: collapse;
     font-size: 11px;
-    table-layout: auto;
 }
 
 th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--table-header);
     color: white;
     padding: 8px 4px;
-    font-weight: 600;
     white-space: nowrap;
 }
 
 td {
     padding: 6px 4px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border-color);
     white-space: nowrap;
+    color: var(--text-primary);
 }
 
-/* Estatus badges */
 .status-disponible {
     background: #d4edda;
     color: #155724;
     padding: 2px 6px;
     border-radius: 12px;
     font-size: 10px;
-    font-weight: bold;
     display: inline-block;
 }
 
-/* Botones */
+body.dark-mode .status-disponible {
+    background: #1e3a2e;
+    color: #90ee90;
+}
+
 .btn-editar, .btn-eliminar {
     text-decoration: none;
     padding: 3px 8px;
@@ -216,7 +215,7 @@ td {
     color: white;
 }
 
-/* Alertas */
+/* ========== ALERTAS ========== */
 .alert {
     padding: 10px;
     margin-bottom: 12px;
@@ -234,81 +233,28 @@ td {
     color: #721c24;
 }
 
-/* ========== FILTROS DE BÚSQUEDA ========== */
-.filtros {
-    background: white;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 12px;
+body.dark-mode .alert-success {
+    background: #1e3a2e;
+    color: #90ee90;
 }
 
-.filtros form {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+body.dark-mode .alert-error {
+    background: #3a1e24;
+    color: #ff9999;
 }
 
-.filtros input, .filtros select {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 12px;
-}
-
-.filtros button {
-    background: #667eea;
-    color: white;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-/* ========== DASHBOARD ========== */
-.dashboard-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.card {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    text-align: center;
-}
-
-.card h3 {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 10px;
-}
-
-.card .numero {
-    font-size: 28px;
-    font-weight: bold;
-    color: #667eea;
-}
-
-/* ========== RESPONSIVE MEJORADO ========== */
+/* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
     .header {
         flex-direction: column;
         text-align: center;
     }
     
-    .toolbar {
-        text-align: center;
+    .filtros form {
+        flex-direction: column;
     }
     
-    .btn-agregar, .btn-usuarios {
-        display: inline-block;
-        margin: 5px;
-    }
-    
-    th, td {
-        font-size: 10px;
-        padding: 6px 3px;
+    .filtros input, .filtros select, .btn-buscar, .btn-limpiar {
+        width: 100%;
     }
 }
