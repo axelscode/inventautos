@@ -240,11 +240,12 @@
 </head>
 <body>
     <div class="header">
-        <h1>📊 Dashboard</h1>
-        <div style="display: flex; align-items: center; gap: 15px;">
+    <h1>📊 Dashboard</h1>
+    <div style="display: flex; align-items: center; gap: 15px;">
             <button id="themeToggle" class="theme-btn">🌙 Dark</button>
+            <a href="{{ url_for('inventario') }}" class="btn-home">🏠 Home</a>
             <span class="user-badge">👤 {{ session.usuario_id }} ({{ session.rol }})</span>
-            <a href="{{ url_for('inventario') }}" class="btn-logout">← Volver</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Salir</a>
         </div>
     </div>
     

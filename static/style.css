@@ -184,6 +184,22 @@ body.dark-mode .status-disponible {
 .btn-editar { background: #ffc107; color: #333; }
 .btn-eliminar { background: #dc3545; color: white; }
 
+.btn-home {
+    background: #17a2b8;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 12px;
+    transition: all 0.3s ease;
+}
+
+.btn-home:hover {
+    background: #138496;
+    transform: translateY(-1px);
+}
+
+
 /* Alertas */
 .alert {
     padding: 10px;

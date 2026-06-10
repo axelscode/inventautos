@@ -118,10 +118,11 @@
 </head>
 <body>
     <div class="header">
-        <h1>🚗 Agregar Vehículo</h1>
+    <h1>🚗 Agregar Vehículo</h1>
         <div style="display: flex; align-items: center; gap: 15px;">
-            <button id="themeToggle" class="theme-btn" style="background:#667eea; color:white; border:none; padding:5px 12px; border-radius:20px; cursor:pointer;">🌙 Dark</button>
-            <a href="{{ url_for('inventario') }}" class="btn-logout">← Volver al Inventario</a>
+            <button id="themeToggle" class="theme-btn">🌙 Dark</button>
+            <a href="{{ url_for('inventario') }}" class="btn-home">🏠 Home</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Salir</a>
         </div>
     </div>
     

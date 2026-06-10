@@ -79,8 +79,9 @@
         <h1>🚗 INVENTAUTOS</h1>
         <div style="display: flex; align-items: center; gap: 15px;">
             <button id="themeToggle" class="theme-btn">🌙 Dark</button>
+            <a href="{{ url_for('inventario') }}" class="btn-home">🏠 Home</a>
             <span class="user-badge">👤 {{ session.usuario_id }} ({{ rol }})</span>
-            <a href="{{ url_for('logout') }}" class="btn-logout">Salir</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Salir</a>
         </div>
     </div>
     

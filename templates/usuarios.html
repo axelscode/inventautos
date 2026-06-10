@@ -158,11 +158,12 @@
 </head>
 <body>
     <div class="header">
-        <h1>👥 Gestión de Usuarios</h1>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <button id="themeToggle" class="theme-btn">🌙 Dark</button>
-            <a href="{{ url_for('inventario') }}" class="btn-logout">← Volver al Inventario</a>
-        </div>
+    <h1>👥 Gestión de Usuarios</h1>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <button id="themeToggle" class="theme-btn">🌙 Dark</button>
+        <a href="{{ url_for('inventario') }}" class="btn-home">🏠 Home</a>
+        <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Salir</a>
+     </div>
     </div>
     
     <div class="usuarios-container">
