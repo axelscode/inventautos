@@ -5,51 +5,130 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INVENTAUTOS - Inventario</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Estilos adicionales para el inventario */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-card .label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        
+        .filtros-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .filtros-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+        }
+        
+        .btn-excel {
+            background: #28a745;
+            color: white;
+            padding: 6px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .btn-excel:hover {
+            background: #218838;
+        }
+    </style>
 </head>
 <body>
     <div class="header">
         <h1>🚗 INVENTAUTOS</h1>
         <div style="display: flex; align-items: center; gap: 15px;">
-            <!-- Theme Toggle -->
-            <button id="themeToggle" class="theme-btn" style="background:#667eea; color:white; border:none; padding:5px 12px; border-radius:20px; cursor:pointer;">🌙 Dark</button>
-            <span>👤 {{ session.usuario_id }} ({{ rol }})</span>
+            <button id="themeToggle" class="theme-btn">🌙 Dark</button>
+            <span class="user-badge">👤 {{ session.usuario_id }} ({{ rol }})</span>
             <a href="{{ url_for('logout') }}" class="btn-logout">Salir</a>
+        </div>
+    </div>
+    
+    <!-- Tarjetas de estadísticas -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="number">{{ vehiculos|length }}</div>
+            <div class="label">Total Vehículos</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ vehiculos|selectattr('estatus', 'equalto', 'DISPONIBLE')|list|length }}</div>
+            <div class="label">Disponibles</div>
         </div>
     </div>
     
     <!-- Toolbar -->
     <div class="toolbar">
         {% if rol == 'ADMIN' %}
-            <a href="{{ url_for('agregar_vehiculo') }}" class="btn-agregar">+ Agregar</a>
+            <a href="{{ url_for('agregar_vehiculo') }}" class="btn-agregar">+ Agregar Vehículo</a>
             <a href="{{ url_for('usuarios') }}" class="btn-usuarios">👥 Usuarios</a>
             <a href="{{ url_for('dashboard') }}" class="btn-usuarios">📊 Dashboard</a>
-            <a href="{{ url_for('exportar_excel') }}" class="btn-usuarios">📎 Exportar Excel</a>
+            <a href="{{ url_for('exportar_excel') }}" class="btn-excel">📎 Exportar Excel</a>
         {% endif %}
     </div>
     
-    <!-- Filtros de búsqueda -->
-    <div class="filtros">
+    <!-- Filtros -->
+    <div class="filtros-card">
+        <div class="filtros-title">🔍 Buscar Vehículos</div>
         <form method="GET" action="{{ url_for('inventario') }}">
-            <input type="text" name="buscar" placeholder="Buscar por chassis, marca, modelo..." 
-                   value="{{ request.args.get('buscar', '') }}">
-            <select name="marca">
-                <option value="">Todas las marcas</option>
-                <option value="TOYOTA" {% if request.args.get('marca') == 'TOYOTA' %}selected{% endif %}>TOYOTA</option>
-                <option value="NISSAN" {% if request.args.get('marca') == 'NISSAN' %}selected{% endif %}>NISSAN</option>
-                <option value="SUZUKI" {% if request.args.get('marca') == 'SUZUKI' %}selected{% endif %}>SUZUKI</option>
-                <option value="HONDA" {% if request.args.get('marca') == 'HONDA' %}selected{% endif %}>HONDA</option>
-                <option value="MAZDA" {% if request.args.get('marca') == 'MAZDA' %}selected{% endif %}>MAZDA</option>
-            </select>
-            <select name="estatus">
-                <option value="">Todos los estatus</option>
-                <option value="DISPONIBLE" {% if request.args.get('estatus') == 'DISPONIBLE' %}selected{% endif %}>Disponible</option>
-                <option value="VENDIDO" {% if request.args.get('estatus') == 'VENDIDO' %}selected{% endif %}>Vendido</option>
-                <option value="RESERVADO" {% if request.args.get('estatus') == 'RESERVADO' %}selected{% endif %}>Reservado</option>
-            </select>
-            <button type="submit" class="btn-buscar">🔍 Buscar</button>
-            {% if request.args.get('buscar') or request.args.get('marca') or request.args.get('estatus') %}
-                <a href="{{ url_for('inventario') }}" class="btn-limpiar">✖ Limpiar filtros</a>
-            {% endif %}
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="text" name="buscar" placeholder="Buscar por chassis, marca, modelo..." 
+                       value="{{ request.args.get('buscar', '') }}" style="flex: 2;">
+                <select name="marca">
+                    <option value="">Todas las marcas</option>
+                    <option value="TOYOTA" {% if request.args.get('marca') == 'TOYOTA' %}selected{% endif %}>TOYOTA</option>
+                    <option value="NISSAN" {% if request.args.get('marca') == 'NISSAN' %}selected{% endif %}>NISSAN</option>
+                    <option value="SUZUKI" {% if request.args.get('marca') == 'SUZUKI' %}selected{% endif %}>SUZUKI</option>
+                </select>
+                <select name="estatus">
+                    <option value="">Todos</option>
+                    <option value="DISPONIBLE" {% if request.args.get('estatus') == 'DISPONIBLE' %}selected{% endif %}>Disponible</option>
+                    <option value="VENDIDO" {% if request.args.get('estatus') == 'VENDIDO' %}selected{% endif %}>Vendido</option>
+                </select>
+                <button type="submit" class="btn-buscar">🔍 Buscar</button>
+                {% if request.args.get('buscar') or request.args.get('marca') or request.args.get('estatus') %}
+                    <a href="{{ url_for('inventario') }}" class="btn-limpiar">✖ Limpiar</a>
+                {% endif %}
+            </div>
         </form>
     </div>
     
@@ -62,15 +141,7 @@
         {% endif %}
     {% endwith %}
     
-    <!-- Resultados info -->
-    {% if request.args.get('buscar') or request.args.get('marca') or request.args.get('estatus') %}
-        <div class="resultados-info">
-            Mostrando {{ vehiculos|length }} resultado(s)
-            <a href="{{ url_for('inventario') }}" style="margin-left:10px;">Ver todos</a>
-        </div>
-    {% endif %}
-    
-    <!-- Tabla de vehículos -->
+    <!-- Tabla -->
     <div class="table-container">
         <div class="table-wrapper">
             <table>
@@ -124,20 +195,16 @@
     </div>
     
     <script>
-        // Función para cambiar tema
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
             localStorage.setItem('darkMode', isDark);
-            
-            // Cambiar texto del botón
             const btn = document.getElementById('themeToggle');
             if (btn) {
                 btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
             }
         }
         
-        // Cargar tema guardado
         const savedDarkMode = localStorage.getItem('darkMode') === 'true';
         if (savedDarkMode) {
             document.body.classList.add('dark-mode');
@@ -147,7 +214,6 @@
             }
         }
         
-        // Agregar evento al botón
         const toggleBtn = document.getElementById('themeToggle');
         if (toggleBtn) {
             toggleBtn.addEventListener('click', toggleTheme);

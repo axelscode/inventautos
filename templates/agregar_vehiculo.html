@@ -2,82 +2,238 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Agregar Vehículo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INVENTAUTOS - Agregar Vehículo</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
-    <!-- Theme Toggle en el header -->
-<div class="theme-switch-wrapper">
-    <span class="theme-label">🌙</span>
-    <label class="theme-switch">
-        <input type="checkbox" id="theme-toggle">
-        <span class="slider"></span>
-    </label>
-    <span class="theme-label">☀️</span>
-</div>
-
-<script>
-    // Función para cambiar tema
-    function setTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-    }
-    
-    // Función para toggle
-    function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        if (currentTheme === 'dark') {
-            setTheme('light');
-        } else {
-            setTheme('dark');
+    <style>
+        .form-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 25px;
+            max-width: 900px;
+            margin: 0 auto;
         }
-    }
-    
-    // Inicializar tema desde localStorage
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        // Actualizar checkbox
-        const toggle = document.getElementById('theme-toggle');
-        if (toggle && savedTheme === 'dark') {
-            toggle.checked = true;
+        
+        .form-title {
+            font-size: 24px;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
         }
-    }
-    
-    // Agregar event listener
-    const toggle = document.getElementById('theme-toggle');
-    if (toggle) {
-        toggle.addEventListener('change', toggleTheme);
-    }
-</script>
-
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        
+        .form-group label .required {
+            color: #dc3545;
+        }
+        
+        .form-group input, 
+        .form-group select {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        
+        .form-group input:focus, 
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+        
+        .form-actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+        
+        .btn-guardar {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .btn-cancelar {
+            background: #6c757d;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn-guardar, .btn-cancelar {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="header">
         <h1>🚗 Agregar Vehículo</h1>
-        <a href="{{ url_for('inventario') }}" class="btn-logout">← Volver</a>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button id="themeToggle" class="theme-btn" style="background:#667eea; color:white; border:none; padding:5px 12px; border-radius:20px; cursor:pointer;">🌙 Dark</button>
+            <a href="{{ url_for('inventario') }}" class="btn-logout">← Volver al Inventario</a>
+        </div>
     </div>
     
-    <div class="table-container">
+    <div class="form-container">
+        <div class="form-title">
+            ➕ Nuevo Vehículo
+        </div>
+        
         <form method="POST">
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                <div><label>Chassis:</label><input type="text" name="chassis" required></div>
-                <div><label>Estatus:</label><input type="text" name="estatus" value="DISPONIBLE"></div>
-                <div><label>Marca:</label><input type="text" name="marca" required></div>
-                <div><label>Modelo:</label><input type="text" name="modelo" required></div>
-                <div><label>Tipo:</label><input type="text" name="tipo"></div>
-                <div><label>Año:</label><input type="number" name="ano"></div>
-                <div><label>Color:</label><input type="text" name="color"></div>
-                <div><label>Precio:</label><input type="number" step="0.01" name="precio" value="0"></div>
-                <div><label>Precio Contado:</label><input type="number" step="0.01" name="precio_contado" value="0"></div>
-                <div><label>Precio Financiamiento:</label><input type="number" step="0.01" name="precio_financiamiento" value="0"></div>
-                <div><label>Locación:</label><input type="text" name="locacion"></div>
-                <div><label>País:</label><input type="text" name="pais" value="JAPON"></div>
-                <div><label>BL:</label><input type="text" name="bl"></div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Chassis <span class="required">*</span></label>
+                    <input type="text" name="chassis" required placeholder="Ej: MXPH10-2027887">
+                </div>
+                
+                <div class="form-group">
+                    <label>Estatus</label>
+                    <select name="estatus">
+                        <option value="DISPONIBLE">DISPONIBLE</option>
+                        <option value="VENDIDO">VENDIDO</option>
+                        <option value="RESERVADO">RESERVADO</option>
+                        <option value="EN MANTENIMIENTO">EN MANTENIMIENTO</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Marca <span class="required">*</span></label>
+                    <input type="text" name="marca" required placeholder="Ej: TOYOTA">
+                </div>
+                
+                <div class="form-group">
+                    <label>Modelo <span class="required">*</span></label>
+                    <input type="text" name="modelo" required placeholder="Ej: YARIS">
+                </div>
+                
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <input type="text" name="tipo" placeholder="Ej: AUTOMOVIL">
+                </div>
+                
+                <div class="form-group">
+                    <label>Año</label>
+                    <input type="number" name="ano" placeholder="Ej: 2021">
+                </div>
+                
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="text" name="color" placeholder="Ej: GRIS">
+                </div>
+                
+                <div class="form-group">
+                    <label>Precio Normal</label>
+                    <input type="number" step="0.01" name="precio" value="0" placeholder="0">
+                </div>
+                
+                <div class="form-group">
+                    <label>Precio Contado</label>
+                    <input type="number" step="0.01" name="precio_contado" value="0" placeholder="0">
+                </div>
+                
+                <div class="form-group">
+                    <label>Precio Financiamiento</label>
+                    <input type="number" step="0.01" name="precio_financiamiento" value="0" placeholder="0">
+                </div>
+                
+                <div class="form-group">
+                    <label>Locación</label>
+                    <input type="text" name="locacion" placeholder="Ej: JAPON">
+                </div>
+                
+                <div class="form-group">
+                    <label>País</label>
+                    <input type="text" name="pais" value="JAPON" placeholder="JAPON">
+                </div>
+                
+                <div class="form-group full-width">
+                    <label>BL (Bill of Lading)</label>
+                    <input type="text" name="bl" placeholder="Ej: S00348455">
+                </div>
             </div>
-            <div style="margin-top: 20px;">
-                <button type="submit" class="btn-agregar">Guardar</button>
+            
+            <div class="form-actions">
+                <a href="{{ url_for('inventario') }}" class="btn-cancelar">Cancelar</a>
+                <button type="submit" class="btn-guardar">💾 Guardar Vehículo</button>
             </div>
         </form>
     </div>
+    
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            const btn = document.getElementById('themeToggle');
+            if (btn) {
+                btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+            }
+        }
+        
+        const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (savedDarkMode) {
+            document.body.classList.add('dark-mode');
+            const btn = document.getElementById('themeToggle');
+            if (btn) {
+                btn.textContent = '☀️ Light';
+            }
+        }
+        
+        const toggleBtn = document.getElementById('themeToggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', toggleTheme);
+        }
+    </script>
 </body>
 </html>

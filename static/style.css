@@ -1,11 +1,4 @@
-/* ========== ESTILOS GENERALES ========== */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-/* Tema Claro (default) */
+/* ========== VARIABLES GLOBALES ========== */
 :root {
     --bg-body: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --bg-card: #ffffff;
@@ -16,7 +9,6 @@
     --btn-buscar: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-/* Tema Oscuro */
 body.dark-mode {
     --bg-body: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     --bg-card: #2d2d44;
@@ -32,11 +24,10 @@ body {
     background: var(--bg-body);
     min-height: 100vh;
     padding: 10px;
-    overflow-x: hidden;
     transition: all 0.3s ease;
 }
 
-/* ========== HEADER ========== */
+/* Header */
 .header {
     background: var(--bg-card);
     padding: 12px 20px;
@@ -54,6 +45,14 @@ body {
     font-size: 18px;
 }
 
+.user-badge {
+    background: var(--border-color);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
 .btn-logout {
     background: #dc3545;
     color: white;
@@ -63,7 +62,17 @@ body {
     font-size: 12px;
 }
 
-/* ========== TOOLBAR ========== */
+.theme-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+/* Toolbar */
 .toolbar {
     background: var(--bg-card);
     padding: 10px 20px;
@@ -81,55 +90,39 @@ body {
     margin-right: 10px;
 }
 
-.btn-agregar {
-    background: #28a745;
-    color: white;
-}
+.btn-agregar { background: #28a745; color: white; }
+.btn-usuarios { background: #17a2b8; color: white; }
 
-.btn-usuarios {
-    background: #17a2b8;
-    color: white;
-}
-
-/* ========== FILTROS ========== */
-.filtros {
+/* Filtros */
+.filtros-card {
     background: var(--bg-card);
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 12px;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
 }
 
-.filtros form {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.filtros input, .filtros select {
-    padding: 8px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 13px;
-    background: var(--bg-card);
+.filtros-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
     color: var(--text-primary);
 }
 
-.filtros input {
-    flex: 2;
-    min-width: 200px;
-}
-
-.filtros select {
-    flex: 1;
-    min-width: 120px;
+.filtros-card input, .filtros-card select {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text-primary);
 }
 
 .btn-buscar {
     background: var(--btn-buscar);
     color: white;
     border: none;
-    padding: 8px 20px;
+    padding: 10px 20px;
     border-radius: 8px;
     cursor: pointer;
 }
@@ -138,24 +131,11 @@ body {
     background: #6c757d;
     color: white;
     text-decoration: none;
-    padding: 8px 15px;
+    padding: 10px 20px;
     border-radius: 8px;
 }
 
-.resultados-info {
-    background: #e3f2fd;
-    padding: 8px 15px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    font-size: 13px;
-}
-
-body.dark-mode .resultados-info {
-    background: #1e3a5f;
-    color: #e0e0e0;
-}
-
-/* ========== TABLA ========== */
+/* Tabla */
 .table-container {
     background: var(--bg-card);
     border-radius: 12px;
@@ -173,13 +153,11 @@ th {
     background: var(--table-header);
     color: white;
     padding: 8px 4px;
-    white-space: nowrap;
 }
 
 td {
     padding: 6px 4px;
     border-bottom: 1px solid var(--border-color);
-    white-space: nowrap;
     color: var(--text-primary);
 }
 
@@ -189,7 +167,6 @@ td {
     padding: 2px 6px;
     border-radius: 12px;
     font-size: 10px;
-    display: inline-block;
 }
 
 body.dark-mode .status-disponible {
@@ -202,20 +179,12 @@ body.dark-mode .status-disponible {
     padding: 3px 8px;
     border-radius: 4px;
     font-size: 11px;
-    margin: 0 2px;
 }
 
-.btn-editar {
-    background: #ffc107;
-    color: #333;
-}
+.btn-editar { background: #ffc107; color: #333; }
+.btn-eliminar { background: #dc3545; color: white; }
 
-.btn-eliminar {
-    background: #dc3545;
-    color: white;
-}
-
-/* ========== ALERTAS ========== */
+/* Alertas */
 .alert {
     padding: 10px;
     margin-bottom: 12px;
@@ -223,38 +192,16 @@ body.dark-mode .status-disponible {
     font-size: 12px;
 }
 
-.alert-success {
-    background: #d4edda;
-    color: #155724;
-}
+.alert-success { background: #d4edda; color: #155724; }
+.alert-error { background: #f8d7da; color: #721c24; }
 
-.alert-error {
-    background: #f8d7da;
-    color: #721c24;
-}
+body.dark-mode .alert-success { background: #1e3a2e; color: #90ee90; }
+body.dark-mode .alert-error { background: #3a1e24; color: #ff9999; }
 
-body.dark-mode .alert-success {
-    background: #1e3a2e;
-    color: #90ee90;
-}
-
-body.dark-mode .alert-error {
-    background: #3a1e24;
-    color: #ff9999;
-}
-
-/* ========== RESPONSIVE ========== */
-@media (max-width: 768px) {
-    .header {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .filtros form {
-        flex-direction: column;
-    }
-    
-    .filtros input, .filtros select, .btn-buscar, .btn-limpiar {
-        width: 100%;
-    }
+.user-badge {
+    background: var(--border-color);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--text-primary);
 }
