@@ -1,16 +1,26 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 from functools import wraps
 import sqlite3
 import os
 import pandas as pd
 from io import BytesIO
-from flask import send_file
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'inventautos_secret_key_2024'
 app.config['SESSION_TYPE'] = 'filesystem'
 
 DATABASE = 'inventautos.db'
+
+# Configuración para uploads
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'csv'}
+
+# Crear carpeta de uploads si no existe
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Función para conectar a SQLite
 def get_db():
@@ -103,7 +113,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Ruta login
+# Rutas
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -198,6 +208,14 @@ def dashboard():
     """)
     top_marcas = cursor.fetchall()
     
+    cursor.execute("""
+        SELECT chassis, marca, modelo, ano, estatus, precio 
+        FROM vehiculos 
+        ORDER BY id DESC 
+        LIMIT 5
+    """)
+    ultimos_vehiculos = cursor.fetchall()
+    
     conn.close()
     
     return render_template('dashboard.html', 
@@ -205,7 +223,8 @@ def dashboard():
                          disponibles=disponibles,
                          vendidos=vendidos,
                          valor_total=valor_total,
-                         top_marcas=top_marcas)
+                         top_marcas=top_marcas,
+                         ultimos_vehiculos=ultimos_vehiculos)
 
 @app.route('/exportar_excel')
 @login_required
@@ -221,6 +240,133 @@ def exportar_excel():
     
     output.seek(0)
     return send_file(output, download_name='inventario.xlsx', as_attachment=True)
+
+@app.route('/descargar_plantilla')
+@login_required
+@admin_required
+def descargar_plantilla():
+    plantilla = pd.DataFrame({
+        'CHASSIS': ['ABC123-456789', 'DEF456-789012'],
+        'ESTATUS': ['DISPONIBLE', 'DISPONIBLE'],
+        'MARCA': ['TOYOTA', 'NISSAN'],
+        'MODELO': ['COROLLA', 'VERSA'],
+        'TIPO': ['SEDAN', 'SEDAN'],
+        'ANO': [2022, 2021],
+        'COLOR': ['ROJO', 'AZUL'],
+        'PRECIO': [15000, 12000],
+        'PRECIO_CONTADO': [14000, 11000],
+        'PRECIO_FINANCIAMIENTO': [16000, 13000],
+        'LOCACION': ['JAPON', 'JAPON'],
+        'PAIS': ['JAPON', 'JAPON'],
+        'BL': ['BL001', 'BL002']
+    })
+    
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        plantilla.to_excel(writer, index=False, sheet_name='Plantilla')
+    
+    output.seek(0)
+    return send_file(output, download_name='plantilla_vehiculos.xlsx', as_attachment=True)
+
+@app.route('/importar_vehiculos', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def importar_vehiculos():
+    if request.method == 'POST':
+        if 'archivo' not in request.files:
+            flash('No se seleccionó ningún archivo', 'error')
+            return redirect(url_for('importar_vehiculos'))
+        
+        archivo = request.files['archivo']
+        
+        if archivo.filename == '':
+            flash('No se seleccionó ningún archivo', 'error')
+            return redirect(url_for('importar_vehiculos'))
+        
+        if not allowed_file(archivo.filename):
+            flash('Formato no permitido. Use .xlsx, .xls o .csv', 'error')
+            return redirect(url_for('importar_vehiculos'))
+        
+        try:
+            filename = secure_filename(archivo.filename)
+            filepath = os.path.join(UPLOAD_FOLDER, filename)
+            archivo.save(filepath)
+            
+            if filename.endswith('.csv'):
+                df = pd.read_csv(filepath, encoding='utf-8')
+            else:
+                df = pd.read_excel(filepath)
+            
+            os.remove(filepath)
+            
+            df.columns = df.columns.str.strip().str.upper()
+            
+            conn = get_db()
+            cursor = conn.cursor()
+            
+            vehiculos_agregados = 0
+            vehiculos_omitidos = 0
+            errores = []
+            
+            for idx, row in df.iterrows():
+                try:
+                    chassis = str(row.get('CHASSIS', '')).strip()
+                    marca = str(row.get('MARCA', '')).strip()
+                    modelo = str(row.get('MODELO', '')).strip()
+                    
+                    if not chassis or not marca or not modelo:
+                        errores.append(f"Fila {idx + 2}: Faltan campos requeridos")
+                        vehiculos_omitidos += 1
+                        continue
+                    
+                    cursor.execute("SELECT id FROM vehiculos WHERE chassis = ?", (chassis,))
+                    if cursor.fetchone():
+                        errores.append(f"Fila {idx + 2}: Chassis {chassis} ya existe")
+                        vehiculos_omitidos += 1
+                        continue
+                    
+                    estatus = str(row.get('ESTATUS', 'DISPONIBLE')).upper()
+                    tipo = str(row.get('TIPO', '')) if pd.notna(row.get('TIPO')) else None
+                    ano = int(row.get('ANO', 0)) if pd.notna(row.get('ANO')) else None
+                    color = str(row.get('COLOR', '')) if pd.notna(row.get('COLOR')) else None
+                    precio = float(row.get('PRECIO', 0)) if pd.notna(row.get('PRECIO')) else 0
+                    precio_contado = float(row.get('PRECIO_CONTADO', 0)) if pd.notna(row.get('PRECIO_CONTADO')) else 0
+                    precio_financiamiento = float(row.get('PRECIO_FINANCIAMIENTO', 0)) if pd.notna(row.get('PRECIO_FINANCIAMIENTO')) else 0
+                    locacion = str(row.get('LOCACION', '')) if pd.notna(row.get('LOCACION')) else None
+                    pais = str(row.get('PAIS', 'JAPON')) if pd.notna(row.get('PAIS')) else 'JAPON'
+                    bl = str(row.get('BL', '')) if pd.notna(row.get('BL')) else None
+                    
+                    cursor.execute('''INSERT INTO vehiculos 
+                        (chassis, estatus, marca, modelo, tipo, ano, color, 
+                         precio, precio_contado, precio_financiamiento, locacion, pais, bl) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                        (chassis, estatus, marca, modelo, tipo, ano, color,
+                         precio, precio_contado, precio_financiamiento, locacion, pais, bl))
+                    
+                    vehiculos_agregados += 1
+                    
+                except Exception as e:
+                    errores.append(f"Fila {idx + 2}: Error - {str(e)}")
+                    vehiculos_omitidos += 1
+            
+            conn.commit()
+            conn.close()
+            
+            flash(f'✅ Importación completada: {vehiculos_agregados} vehículos agregados, {vehiculos_omitidos} omitidos', 'success')
+            
+            if errores and len(errores) <= 5:
+                for error in errores:
+                    flash(f'⚠️ {error}', 'error')
+            elif errores:
+                flash(f'⚠️ {len(errores)} errores en total. Revisa el formato del archivo.', 'error')
+            
+            return redirect(url_for('inventario'))
+            
+        except Exception as e:
+            flash(f'Error al leer el archivo: {str(e)}', 'error')
+            return redirect(url_for('importar_vehiculos'))
+    
+    return render_template('importar_vehiculos.html')
 
 @app.route('/agregar_vehiculo', methods=['GET', 'POST'])
 @login_required
