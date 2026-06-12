@@ -27,10 +27,45 @@
             font-size: 12px;
             color: var(--text-secondary);
         }
+        
+        /* Estilos para botones */
         .btn-excel { background: #28a745; color: white; padding: 6px 15px; border-radius: 8px; text-decoration: none; font-size: 12px; margin-left: 10px; }
         .btn-importar { background: #ffc107; color: #333; padding: 6px 15px; border-radius: 8px; text-decoration: none; font-size: 12px; margin-left: 10px; }
         .btn-codigo { background: #17a2b8; color: white; padding: 6px 15px; border-radius: 8px; text-decoration: none; font-size: 12px; margin-left: 10px; }
+        .btn-agregar { background: #28a745; color: white; }
+        .btn-usuarios { background: #17a2b8; color: white; }
+        .btn-dashboard { background: #6c757d; color: white; padding: 6px 15px; border-radius: 8px; text-decoration: none; font-size: 12px; }
+        .btn-logs { background: #fd7e14; color: white; padding: 6px 15px; border-radius: 8px; text-decoration: none; font-size: 12px; }
+        .btn-backups { background: #20c997; color: white; padding: 6px 15px; border-radius: 8px; text-decoration: none; font-size: 12px; }
+        .btn-sesiones { background: #e83e8c; color: white; padding: 6px 15px; border-radius: 8px; text-decoration: none; font-size: 12px; }
         
+        /* Grupos de botones */
+        .toolbar {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .btn-group {
+            display: inline-block;
+            margin-right: 25px;
+            vertical-align: top;
+        }
+        .btn-group-titulo {
+            display: block;
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-group a {
+            display: inline-block;
+            margin: 3px;
+        }
+        
+        /* Estilos para estados */
         .status-disponible { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
         .status-vendido { background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
         .status-reservado { background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
@@ -39,6 +74,7 @@
         body.dark-mode .status-vendido { background: #3a1e24; color: #ff9999; }
         body.dark-mode .status-reservado { background: #3a3a1e; color: #ffd966; }
         
+        /* Select de estatus */
         .select-estatus {
             padding: 5px 8px;
             border-radius: 8px;
@@ -48,58 +84,33 @@
             font-size: 11px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s ease;
         }
+        .select-estatus.estatus-disponible { background: #d4edda; color: #155724; border-color: #28a745; }
+        .select-estatus.estatus-vendido { background: #f8d7da; color: #721c24; border-color: #dc3545; }
+        .select-estatus.estatus-reservado { background: #fff3cd; color: #856404; border-color: #ffc107; }
+        body.dark-mode .select-estatus.estatus-disponible { background: #1e3a2e; color: #90ee90; border-color: #28a745; }
+        body.dark-mode .select-estatus.estatus-vendido { background: #3a1e24; color: #ff9999; border-color: #dc3545; }
+        body.dark-mode .select-estatus.estatus-reservado { background: #3a3a1e; color: #ffd966; border-color: #ffc107; }
         
-        .select-estatus:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .select-estatus.estatus-disponible {
-            background: #d4edda;
-            color: #155724;
-            border-color: #28a745;
-        }
-        
-        .select-estatus.estatus-vendido {
-            background: #f8d7da;
-            color: #721c24;
-            border-color: #dc3545;
-        }
-        
-        .select-estatus.estatus-reservado {
-            background: #fff3cd;
-            color: #856404;
-            border-color: #ffc107;
-        }
-        
-        body.dark-mode .select-estatus.estatus-disponible {
-            background: #1e3a2e;
-            color: #90ee90;
-            border-color: #28a745;
-        }
-        
-        body.dark-mode .select-estatus.estatus-vendido {
-            background: #3a1e24;
-            color: #ff9999;
-            border-color: #dc3545;
-        }
-        
-        body.dark-mode .select-estatus.estatus-reservado {
-            background: #3a3a1e;
-            color: #ffd966;
-            border-color: #ffc107;
-        }
-        
-        .acciones-cell {
-            white-space: nowrap;
-            min-width: 180px;
-        }
-        .estatus-cell {
+        /* Columna de foto */
+        .foto-cell {
             text-align: center;
-            min-width: 110px;
+            width: 60px;
         }
+        .miniatura-foto {
+            width: 50px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+        .sin-foto-mini {
+            font-size: 20px;
+            opacity: 0.5;
+        }
+        
+        .acciones-cell { white-space: nowrap; min-width: 180px; }
+        .estatus-cell { text-align: center; min-width: 110px; }
     </style>
 </head>
 <body>
@@ -122,16 +133,26 @@
     
     <div class="toolbar">
         {% if rol == 'ADMIN' %}
+        <div class="btn-group">
+            <span class="btn-group-titulo">🚗 Vehículos</span>
             <a href="{{ url_for('agregar_vehiculo') }}" class="btn-agregar">+ Agregar Vehículo</a>
-            <a href="{{ url_for('usuarios') }}" class="btn-usuarios">👥 Usuarios</a>
-            <a href="{{ url_for('dashboard') }}" class="btn-usuarios">📊 Dashboard</a>
-            <a href="{{ url_for('exportar_excel') }}" class="btn-excel">📎 Exportar Excel</a>
             <a href="{{ url_for('importar_vehiculos') }}" class="btn-importar">📥 Importar</a>
+            <a href="{{ url_for('exportar_excel') }}" class="btn-excel">📎 Exportar Excel</a>
+        </div>
+        
+        <div class="btn-group">
+            <span class="btn-group-titulo">👑 Administración</span>
+            <a href="{{ url_for('usuarios') }}" class="btn-usuarios">👥 Usuarios</a>
             <a href="{{ url_for('ver_codigo') }}" class="btn-codigo">🔐 Código</a>
-            <a href="{{ url_for('logs_actividad') }}" class="btn-usuarios" style="background: #fd7e14;">📋 Logs</a>
-            <a href="{{ url_for('lista_backups') }}" class="btn-usuarios" style="background: #fd7e14;">💾 Backups</a>
-            <a href="{{ url_for('sesiones_activas') }}" class="btn-usuarios" style="background: #fd7e14;">🔐 Sesiones</a>
-
+            <a href="{{ url_for('sesiones_activas') }}" class="btn-sesiones">🔑 Sesiones</a>
+        </div>
+        
+        <div class="btn-group">
+            <span class="btn-group-titulo">📊 Sistema</span>
+            <a href="{{ url_for('dashboard') }}" class="btn-dashboard">📈 Dashboard</a>
+            <a href="{{ url_for('logs_actividad') }}" class="btn-logs">📋 Logs</a>
+            <a href="{{ url_for('lista_backups') }}" class="btn-backups">💾 Backups</a>
+        </div>
         {% endif %}
     </div>
     
@@ -175,6 +196,7 @@
             <table id="tabla-vehiculos">
                 <thead>
                     <tr>
+                        <th>Foto</th>
                         <th>Chassis</th>
                         <th>Marca</th>
                         <th>Modelo</th>
@@ -196,6 +218,13 @@
                 <tbody>
                     {% for v in vehiculos %}
                     <tr id="fila-{{ v.id }}">
+                        <td class="foto-cell">
+                            {% if v.foto %}
+                                <img src="{{ url_for('static', filename='uploads/' + v.foto) }}" class="miniatura-foto" alt="Foto">
+                            {% else %}
+                                <span class="sin-foto-mini">📷</span>
+                            {% endif %}
+                        </td>
                         <td>{{ v.chassis }}</td>
                         <td>{{ v.marca }}</td>
                         <td>{{ v.modelo }}</td>

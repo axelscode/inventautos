@@ -191,6 +191,94 @@ body.dark-mode .status-disponible {
     font-size: 11px;
 }
 
+/* Grupos de botones en el toolbar */
+.toolbar {
+    background: var(--bg-card);
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+}
+
+.btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    border-left: 2px solid var(--border-color);
+}
+
+.btn-group:first-child {
+    border-left: none;
+    padding-left: 0;
+}
+
+.btn-group-titulo {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-right: 5px;
+}
+
+/* Estilos base para todos los botones */
+.toolbar a {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.toolbar a:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+/* Botones específicos */
+.btn-agregar { background: #28a745; color: white; }
+.btn-importar { background: #ffc107; color: #333; }
+.btn-excel { background: #28a745; color: white; }
+.btn-usuarios { background: #17a2b8; color: white; }
+.btn-codigo { background: #17a2b8; color: white; }
+.btn-sesiones { background: #fd7e14; color: white; }
+.btn-dashboard { background: #6c757d; color: white; }
+.btn-logs { background: #fd7e14; color: white; }
+.btn-backups { background: #fd7e14; color: white; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .btn-group {
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+        padding: 10px 0;
+        justify-content: center;
+    }
+    
+    .btn-group:first-child {
+        border-top: none;
+        padding-top: 0;
+    }
+    
+    .toolbar a {
+        text-align: center;
+        flex: 1;
+    }
+}
+
+
 .btn-editar { background: #ffc107; color: #333; }
 .btn-eliminar { background: #dc3545; color: white; }
 
