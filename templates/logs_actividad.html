@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INVENTAUTOS - Logs de Actividad</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .logs-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .filtros-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .filtros-form {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        
+        .filtro-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .filtro-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .filtro-group input, .filtro-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        
+        .accion-log {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .accion-LOGIN_EXITOSO { background: #28a745; color: white; }
+        .accion-LOGOUT { background: #6c757d; color: white; }
+        .accion-AGREGAR_VEHICULO { background: #17a2b8; color: white; }
+        .accion-EDITAR_VEHICULO { background: #ffc107; color: #333; }
+        .accion-ELIMINAR_VEHICULO { background: #dc3545; color: white; }
+        .accion-CAMBIAR_ESTATUS { background: #fd7e14; color: white; }
+        .accion-IMPORTAR_VEHICULOS { background: #20c997; color: white; }
+        .accion-EXPORTAR_EXCEL { background: #28a745; color: white; }
+        .accion-CREAR_USUARIO { background: #6610f2; color: white; }
+        .accion-ELIMINAR_USUARIO { background: #dc3545; color: white; }
+        .accion-VER_SESIONES { background: #6c757d; color: white; }
+        .accion-VER_LOGS { background: #6c757d; color: white; }
+        .accion-VER_DASHBOARD { background: #6c757d; color: white; }
+        .accion-VER_INVENTARIO { background: #6c757d; color: white; }
+        .accion-VER_USUARIOS { background: #6c757d; color: white; }
+        .accion-default { background: #6c757d; color: white; }
+        
+        .badge-admin { background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 9px; }
+        .badge-normal { background: #6c757d; color: white; padding: 2px 6px; border-radius: 10px; font-size: 9px; }
+        
+        .detalles-log {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .ip-log {
+            font-family: monospace;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Logs de Actividad</h1>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button id="themeToggle" class="theme-btn">🌙 Dark</button>
+            <a href="{{ url_for('inventario') }}" class="btn-home">🏠 Home</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Salir</a>
+        </div>
+    </div>
+    
+    <div class="logs-container">
+        <!-- Filtros -->
+        <div class="filtros-card">
+            <div class="filtros-title">🔍 Filtrar Logs</div>
+            <form method="GET" class="filtros-form">
+                <div class="filtro-group">
+                    <label>Acción</label>
+                    <select name="accion">
+                        <option value="">Todas</option>
+                        {% for accion in acciones %}
+                            <option value="{{ accion.accion }}" {% if request.args.get('accion') == accion.accion %}selected{% endif %}>{{ accion.accion }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filtro-group">
+                    <label>Usuario</label>
+                    <input type="text" name="usuario" placeholder="Buscar usuario..." value="{{ request.args.get('usuario', '') }}">
+                </div>
+                <div class="filtro-group">
+                    <label>Desde</label>
+                    <input type="date" name="fecha_desde" value="{{ request.args.get('fecha_desde', '') }}">
+                </div>
+                <div class="filtro-group">
+                    <label>Hasta</label>
+                    <input type="date" name="fecha_hasta" value="{{ request.args.get('fecha_hasta', '') }}">
+                </div>
+                <div class="filtro-group">
+                    <button type="submit" class="btn-buscar">🔍 Filtrar</button>
+                    <a href="{{ url_for('logs_actividad') }}" class="btn-limpiar" style="margin-left: 10px;">✖ Limpiar</a>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Tabla de logs -->
+        <div class="table-container">
+            <div class="table-title" style="margin-bottom: 15px;">
+                📊 Registro de Actividades ({{ logs|length }} registros)
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha/Hora</th>
+                            <th>Usuario</th>
+                            <th>Rol</th>
+                            <th>Acción</th>
+                            <th>Detalles</th>
+                            <th>IP</th>
+                        </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td style="white-space: nowrap; font-size: 12px;">{{ log.fecha }}</td>
+                            <td><strong>{{ log.usuario_id }}</strong></td>
+                            <td><span class="badge-{{ log.rol|lower }}">{{ log.rol }}</span></td>
+                            <td><span class="accion-log accion-{{ log.accion }}">{{ log.accion }}</span></td>
+                            <td class="detalles-log" title="{{ log.detalles or '' }}">{{ log.detalles or '-' }}</td>
+                            <td class="ip-log">{{ log.ip or 'Desconocida' }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if logs|length == 0 %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px;">No hay registros de actividad</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+        }
+        
+        const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (savedDarkMode) {
+            document.body.classList.add('dark-mode');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = '☀️ Light';
+        }
+        
+        const toggleBtn = document.getElementById('themeToggle');
+        if (toggleBtn) toggleBtn.addEventListener('click', toggleTheme);
+    </script>
+</body>
+</html>

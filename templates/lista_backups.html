@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backups - INVENTAUTOS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .backups-container { max-width: 1000px; margin: 0 auto; }
+        .acciones-bar { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .btn-backup { background: #28a745; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; }
+        .btn-backup:hover { background: #218838; }
+        .tamanio { font-size: 11px; color: #666; }
+        body.dark-mode .tamanio { color: #aaa; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💾 Gestión de Backups</h1>
+        <div style="display: flex; gap: 15px;">
+            <button id="themeToggle" class="theme-btn">🌙 Dark</button>
+            <a href="{{ url_for('inventario') }}" class="btn-home">🏠 Home</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Salir</a>
+        </div>
+    </div>
+    
+    <div class="backups-container">
+        <div class="acciones-bar">
+            <a href="{{ url_for('backup') }}" class="btn-backup" onclick="return confirm('¿Crear backup manual?')">➕ Crear Backup Manual</a>
+        </div>
+        
+        <div class="table-container">
+            <h3>📋 Backups Disponibles ({{ backups|length }})</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Nombre</th><th>Fecha</th><th>Tamaño</th><th>Acciones</th></tr></thead>
+                    <tbody>
+                        {% for b in backups %}
+                        <tr>
+                            <td><strong>{{ b.nombre }}</strong></td>
+                            <td>{{ b.fecha.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                            <td class="tamanio">{{ (b.tamanio / 1024)|round|int }} KB</td>
+                            <td>
+                                <a href="{{ url_for('descargar_backup', nombre=b.nombre) }}" class="btn-editar">📥 Descargar</a>
+                                <a href="{{ url_for('eliminar_backup', nombre=b.nombre) }}" class="btn-eliminar" onclick="return confirm('¿Eliminar?')">🗑 Eliminar</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if backups|length == 0 %}
+                        <tr><td colspan="4" style="text-align:center; padding:40px;">No hay backups. Crea el primero.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="info-card" style="margin-top:20px; padding:15px; background:var(--bg-card); border-radius:12px;">
+            <p>ℹ️ Los backups incluyen: Base de datos, vehículos, usuarios y logs de actividad.</p>
+        </div>
+    </div>
+    
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = document.body.classList.contains('dark-mode') ? '☀️ Light' : '🌙 Dark';
+        }
+        if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode');
+        document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+    </script>
+</body>
+</html>

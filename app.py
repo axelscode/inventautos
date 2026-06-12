@@ -8,32 +8,120 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import random
 import string
+import secrets
+from datetime import datetime, timedelta
+import json
+import zipfile
+import shutil
 
 app = Flask(__name__)
 app.secret_key = 'inventautos_secret_key_2024'
 app.config['SESSION_TYPE'] = 'filesystem'
 
 DATABASE = 'inventautos.db'
+BACKUP_FOLDER = 'backups'
 
-# Configuración para uploads
-UPLOAD_FOLDER = 'uploads'
+# Crear carpetas necesarias
+os.makedirs(BACKUP_FOLDER, exist_ok=True)
+os.makedirs('uploads', exist_ok=True)
+
 ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'csv'}
-
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# ============ FUNCIONES CAPTCHA Y CÓDIGO ============
+# ============ FUNCIONES CAPTCHA, CÓDIGO Y TOKEN ============
 def generar_captcha():
-    """Genera un código CAPTCHA simple de 5 dígitos"""
     texto = ''.join(str(random.randint(0, 9)) for _ in range(5))
     session['captcha_texto'] = texto
     return texto
 
 def generar_codigo_acceso(longitud=6):
-    """Genera un código de acceso aleatorio de 6 dígitos"""
     return ''.join(str(random.randint(0, 9)) for _ in range(longitud))
+
+def generar_token_sesion():
+    return secrets.token_urlsafe(32)
+
+# ============ FUNCIÓN PARA REGISTRAR LOGS ============
+def registrar_log(usuario_id, accion, tabla=None, registro_id=None, detalles=None, ip=None):
+    conn = get_db()
+    cursor = conn.cursor()
+    if ip is None:
+        ip = request.remote_addr if request else 'Sistema'
+    cursor.execute('''
+        INSERT INTO logs_actividad (usuario_id, accion, tabla, registro_id, detalles, ip)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (usuario_id, accion, tabla, registro_id, detalles, ip))
+    conn.commit()
+    conn.close()
+
+# ============ FUNCIONES DE BACKUP ============
+def crear_backup():
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    backup_name = f'backup_{timestamp}'
+    backup_path = os.path.join(BACKUP_FOLDER, backup_name)
+    os.makedirs(backup_path, exist_ok=True)
+    
+    # Respaldar base de datos
+    shutil.copy2(DATABASE, os.path.join(backup_path, 'inventautos.db'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM vehiculos")
+    vehiculos = [dict(v) for v in cursor.fetchall()]
+    with open(os.path.join(backup_path, 'vehiculos.json'), 'w', encoding='utf-8') as f:
+        json.dump(vehiculos, f, ensure_ascii=False, indent=2, default=str)
+    
+    cursor.execute("SELECT id, usuario_id, rol, fecha_creacion FROM usuarios")
+    usuarios = [dict(u) for u in cursor.fetchall()]
+    with open(os.path.join(backup_path, 'usuarios.json'), 'w', encoding='utf-8') as f:
+        json.dump(usuarios, f, ensure_ascii=False, indent=2, default=str)
+    
+    cursor.execute("SELECT * FROM logs_actividad ORDER BY fecha DESC LIMIT 1000")
+    logs = [dict(l) for l in cursor.fetchall()]
+    with open(os.path.join(backup_path, 'logs.json'), 'w', encoding='utf-8') as f:
+        json.dump(logs, f, ensure_ascii=False, indent=2, default=str)
+    
+    stats = {
+        'fecha_backup': datetime.now().isoformat(),
+        'total_vehiculos': len(vehiculos),
+        'total_usuarios': len(usuarios),
+        'total_logs': len(logs)
+    }
+    with open(os.path.join(backup_path, 'reporte.json'), 'w', encoding='utf-8') as f:
+        json.dump(stats, f, ensure_ascii=False, indent=2)
+    
+    conn.close()
+    
+    # Crear ZIP
+    zip_path = os.path.join(BACKUP_FOLDER, f'{backup_name}.zip')
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(backup_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zipf.write(file_path, os.path.relpath(file_path, backup_path))
+    
+    shutil.rmtree(backup_path)
+    return zip_path, stats
+
+def limpiar_backups_antiguos(dias_mantener=30):
+    if not os.path.exists(BACKUP_FOLDER):
+        return 0
+    ahora = datetime.now()
+    eliminados = 0
+    for archivo in os.listdir(BACKUP_FOLDER):
+        if archivo.endswith('.zip'):
+            ruta = os.path.join(BACKUP_FOLDER, archivo)
+            try:
+                fecha_str = archivo.split('_')[1] + '_' + archivo.split('_')[2].split('.')[0]
+                fecha_backup = datetime.strptime(fecha_str, '%Y%m%d_%H%M%S')
+                if (ahora - fecha_backup).days > dias_mantener:
+                    os.remove(ruta)
+                    eliminados += 1
+            except:
+                pass
+    return eliminados
 
 # ============ BASE DE DATOS ============
 def get_db():
@@ -74,21 +162,50 @@ def init_db():
         )
     ''')
     
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS sesiones_activas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id INTEGER NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            ip TEXT,
+            user_agent TEXT,
+            fecha_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            fecha_ultima_actividad TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            fecha_cierre TIMESTAMP,
+            activo INTEGER DEFAULT 1,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        )
+    ''')
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS logs_actividad (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id INTEGER NOT NULL,
+            accion TEXT NOT NULL,
+            tabla TEXT,
+            registro_id INTEGER,
+            detalles TEXT,
+            ip TEXT,
+            fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        )
+    ''')
+    
+    # Limpiar datos antiguos
+    cursor.execute("DELETE FROM sesiones_activas WHERE fecha_ultima_actividad < datetime('now', '-1 day')")
+    cursor.execute("DELETE FROM logs_actividad WHERE fecha < datetime('now', '-30 days')")
+    
     # Usuario admin
     cursor.execute("SELECT * FROM usuarios WHERE usuario_id = 'admin'")
     if not cursor.fetchone():
-        hashed_password = generate_password_hash('admin123')
         cursor.execute("INSERT INTO usuarios (usuario_id, contrasena, rol) VALUES (?, ?, ?)",
-                      ('admin', hashed_password, 'ADMIN'))
+                      ('admin', generate_password_hash('admin123'), 'ADMIN'))
     
-    # Usuario normal
     cursor.execute("SELECT * FROM usuarios WHERE usuario_id = 'usuario1'")
     if not cursor.fetchone():
-        hashed_password = generate_password_hash('user123')
         cursor.execute("INSERT INTO usuarios (usuario_id, contrasena, rol) VALUES (?, ?, ?)",
-                      ('usuario1', hashed_password, 'NORMAL'))
+                      ('usuario1', generate_password_hash('user123'), 'NORMAL'))
     
-    # Vehículos de ejemplo
     cursor.execute("SELECT * FROM vehiculos LIMIT 1")
     if not cursor.fetchone():
         vehiculos_ejemplo = [
@@ -112,6 +229,26 @@ def login_required(f):
         if 'user_id' not in session:
             flash('Por favor inicia sesión primero', 'error')
             return redirect(url_for('login'))
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('SELECT activo FROM sesiones_activas WHERE token = ? AND usuario_id = ? AND activo = 1',
+                      (session.get('token_sesion', ''), session['user_id']))
+        sesion_valida = cursor.fetchone()
+        conn.close()
+        
+        if not sesion_valida:
+            session.clear()
+            flash('Tu sesión ha sido cerrada desde otro dispositivo', 'error')
+            return redirect(url_for('login'))
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('UPDATE sesiones_activas SET fecha_ultima_actividad = CURRENT_TIMESTAMP WHERE token = ?',
+                      (session.get('token_sesion', ''),))
+        conn.commit()
+        conn.close()
+        
         return f(*args, **kwargs)
     return decorated_function
 
@@ -119,15 +256,14 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if session.get('rol') != 'ADMIN':
-            flash('Acceso denegado. Se requieren privilegios de administrador', 'error')
+            flash('Acceso denegado', 'error')
             return redirect(url_for('inventario'))
         return f(*args, **kwargs)
     return decorated_function
 
-# ============ RUTAS ============
+# ============ RUTAS PRINCIPALES ============
 @app.route('/captcha')
 def captcha():
-    """Genera un CAPTCHA de solo texto"""
     texto = generar_captcha()
     return texto
 
@@ -151,40 +287,51 @@ def login():
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM usuarios WHERE usuario_id = ?", (usuario_id,))
         user = cursor.fetchone()
-        conn.close()
         
         if user and check_password_hash(user['contrasena'], contrasena):
+            cursor.execute('SELECT * FROM sesiones_activas WHERE usuario_id = ? AND activo = 1', (user['id'],))
+            sesion_activa = cursor.fetchone()
+            
+            if sesion_activa:
+                cursor.execute('UPDATE sesiones_activas SET activo = 0, fecha_cierre = CURRENT_TIMESTAMP WHERE usuario_id = ? AND activo = 1', (user['id'],))
+                registrar_log(user['id'], 'SESION_CERRADA_OTRO', 'sesiones', sesion_activa['id'], 'Sesión cerrada por nuevo inicio', request.remote_addr)
+            
+            token = generar_token_sesion()
+            cursor.execute('INSERT INTO sesiones_activas (usuario_id, token, ip, user_agent) VALUES (?, ?, ?, ?)',
+                          (user['id'], token, request.remote_addr, request.headers.get('User-Agent', '')[:200]))
+            conn.commit()
+            
+            registrar_log(user['id'], 'LOGIN_EXITOSO', 'usuarios', user['id'], f'Inicio de sesión desde {request.remote_addr}', request.remote_addr)
+            
             session.clear()
             session['user_id'] = user['id']
             session['usuario_id'] = user['usuario_id']
             session['rol'] = user['rol']
+            session['token_sesion'] = token
             session['codigo_acceso'] = generar_codigo_acceso(6)
+            
             flash(f'¡Bienvenido {usuario_id}!', 'success')
+            conn.close()
             return redirect(url_for('inventario'))
         else:
+            if user:
+                registrar_log(user['id'], 'LOGIN_FALLIDO', 'usuarios', user['id'], 'Contraseña incorrecta', request.remote_addr)
+            conn.close()
             flash('Usuario o contraseña incorrectos', 'error')
     
     generar_captcha()
     return render_template('login.html', captcha_texto=session.get('captcha_texto', ''))
 
-@app.route('/ver_codigo')
-@login_required
-@admin_required
-def ver_codigo():
-    codigo = session.get('codigo_acceso', generar_codigo_acceso(6))
-    return render_template('ver_codigo.html', codigo=codigo)
-
-@app.route('/regenerar_codigo')
-@login_required
-@admin_required
-def regenerar_codigo():
-    nuevo_codigo = generar_codigo_acceso(6)
-    session['codigo_acceso'] = nuevo_codigo
-    flash(f'Nuevo código de acceso generado: {nuevo_codigo}', 'success')
-    return redirect(url_for('ver_codigo'))
-
 @app.route('/logout')
 def logout():
+    if 'user_id' in session and 'token_sesion' in session:
+        registrar_log(session['user_id'], 'LOGOUT', 'sesiones', None, 'Cierre de sesión', request.remote_addr)
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('UPDATE sesiones_activas SET activo = 0, fecha_cierre = CURRENT_TIMESTAMP WHERE token = ?', (session['token_sesion'],))
+        conn.commit()
+        conn.close()
+    
     session.clear()
     flash('Sesión cerrada correctamente', 'success')
     return redirect(url_for('login'))
@@ -216,243 +363,148 @@ def inventario():
     cursor.execute(query, params)
     vehiculos = cursor.fetchall()
     conn.close()
+    
+    registrar_log(session['user_id'], 'VER_INVENTARIO', 'vehiculos', None, f'Visualizó inventario', request.remote_addr)
     return render_template('inventario.html', vehiculos=vehiculos, rol=session.get('rol'))
 
 @app.route('/cambiar_estatus_ajax/<int:id>')
 @login_required
 @admin_required
 def cambiar_estatus_ajax(id):
-    """Cambia el estatus del vehículo vía AJAX"""
     nuevo_estatus = request.args.get('nuevo_estatus', '')
-    
     if nuevo_estatus not in ['DISPONIBLE', 'VENDIDO', 'RESERVADO']:
-        return jsonify({'success': False, 'error': 'Estado no válido'})
+        return jsonify({'success': False})
     
     conn = get_db()
     cursor = conn.cursor()
+    cursor.execute("SELECT estatus, chassis, marca, modelo FROM vehiculos WHERE id = ?", (id,))
+    vehiculo = cursor.fetchone()
     
-    cursor.execute("UPDATE vehiculos SET estatus = ? WHERE id = ?", (nuevo_estatus, id))
-    conn.commit()
+    if vehiculo:
+        cursor.execute("UPDATE vehiculos SET estatus = ? WHERE id = ?", (nuevo_estatus, id))
+        conn.commit()
+        registrar_log(session['user_id'], 'CAMBIAR_ESTATUS', 'vehiculos', id, f'{vehiculo["chassis"]}: {vehiculo["estatus"]} → {nuevo_estatus}', request.remote_addr)
+    
     conn.close()
-    
     return jsonify({'success': True, 'nuevo_estatus': nuevo_estatus})
 
 @app.route('/estadisticas')
 @login_required
-@admin_required
 def estadisticas():
-    """Devuelve las estadísticas en JSON para actualizar las tarjetas"""
     conn = get_db()
     cursor = conn.cursor()
-    
     cursor.execute("SELECT COUNT(*) as total FROM vehiculos")
     total = cursor.fetchone()['total']
-    
     cursor.execute("SELECT COUNT(*) as total FROM vehiculos WHERE estatus = 'DISPONIBLE'")
     disponibles = cursor.fetchone()['total']
-    
     cursor.execute("SELECT COUNT(*) as total FROM vehiculos WHERE estatus = 'VENDIDO'")
     vendidos = cursor.fetchone()['total']
-    
     cursor.execute("SELECT COUNT(*) as total FROM vehiculos WHERE estatus = 'RESERVADO'")
     reservados = cursor.fetchone()['total']
-    
     conn.close()
-    
-    return jsonify({
-        'total': total,
-        'disponibles': disponibles,
-        'vendidos': vendidos,
-        'reservados': reservados
-    })
+    return jsonify({'total': total, 'disponibles': disponibles, 'vendidos': vendidos, 'reservados': reservados})
 
-@app.route('/dashboard')
+# ============ RUTAS DE BACKUP ============
+@app.route('/backup')
 @login_required
-def dashboard():
+@admin_required
+def backup():
+    try:
+        zip_path, stats = crear_backup()
+        registrar_log(session['user_id'], 'BACKUP_MANUAL', 'sistema', None, f'Backup creado: {os.path.basename(zip_path)} - {stats["total_vehiculos"]} vehículos', request.remote_addr)
+        flash(f'✅ Backup creado exitosamente', 'success')
+    except Exception as e:
+        flash(f'❌ Error: {str(e)}', 'error')
+    return redirect(url_for('lista_backups'))
+
+@app.route('/lista_backups')
+@login_required
+@admin_required
+def lista_backups():
+    backups = []
+    if os.path.exists(BACKUP_FOLDER):
+        for archivo in os.listdir(BACKUP_FOLDER):
+            if archivo.endswith('.zip'):
+                ruta = os.path.join(BACKUP_FOLDER, archivo)
+                tamanio = os.path.getsize(ruta)
+                fecha = datetime.fromtimestamp(os.path.getmtime(ruta))
+                backups.append({'nombre': archivo, 'ruta': ruta, 'tamanio': tamanio, 'fecha': fecha})
+    backups.sort(key=lambda x: x['fecha'], reverse=True)
+    registrar_log(session['user_id'], 'VER_BACKUPS', 'sistema', None, f'Visualizó {len(backups)} backups', request.remote_addr)
+    return render_template('lista_backups.html', backups=backups)
+
+@app.route('/descargar_backup/<nombre>')
+@login_required
+@admin_required
+def descargar_backup(nombre):
+    ruta = os.path.join(BACKUP_FOLDER, nombre)
+    if not os.path.exists(ruta):
+        flash('Backup no encontrado', 'error')
+        return redirect(url_for('lista_backups'))
+    registrar_log(session['user_id'], 'DESCARGAR_BACKUP', 'sistema', None, f'Descargó backup: {nombre}', request.remote_addr)
+    return send_file(ruta, as_attachment=True, download_name=nombre)
+
+@app.route('/eliminar_backup/<nombre>')
+@login_required
+@admin_required
+def eliminar_backup(nombre):
+    ruta = os.path.join(BACKUP_FOLDER, nombre)
+    if os.path.exists(ruta):
+        os.remove(ruta)
+        registrar_log(session['user_id'], 'ELIMINAR_BACKUP', 'sistema', None, f'Eliminó backup: {nombre}', request.remote_addr)
+        flash('Backup eliminado', 'success')
+    return redirect(url_for('lista_backups'))
+
+# ============ RUTAS DE LOGS Y SESIONES ============
+@app.route('/sesiones_activas')
+@login_required
+@admin_required
+def sesiones_activas():
     conn = get_db()
     cursor = conn.cursor()
-    
-    cursor.execute("SELECT COUNT(*) as total FROM vehiculos")
-    total_vehiculos = cursor.fetchone()['total']
-    
-    cursor.execute("SELECT COUNT(*) as total FROM vehiculos WHERE estatus = 'DISPONIBLE'")
-    disponibles = cursor.fetchone()['total']
-    
-    cursor.execute("SELECT COUNT(*) as total FROM vehiculos WHERE estatus = 'VENDIDO'")
-    vendidos = cursor.fetchone()['total']
-    
-    cursor.execute("SELECT SUM(precio) as total FROM vehiculos")
-    valor_total = cursor.fetchone()['total'] or 0
-    
-    cursor.execute("""
-        SELECT marca, COUNT(*) as total 
-        FROM vehiculos 
-        GROUP BY marca 
-        ORDER BY total DESC 
-        LIMIT 5
-    """)
-    top_marcas = cursor.fetchall()
-    
-    cursor.execute("""
-        SELECT chassis, marca, modelo, ano, estatus, precio 
-        FROM vehiculos 
-        ORDER BY id DESC 
-        LIMIT 5
-    """)
-    ultimos_vehiculos = cursor.fetchall()
-    
+    cursor.execute('''
+        SELECT s.*, u.usuario_id, u.rol FROM sesiones_activas s
+        JOIN usuarios u ON s.usuario_id = u.id WHERE s.activo = 1 ORDER BY s.fecha_inicio DESC
+    ''')
+    sesiones = cursor.fetchall()
     conn.close()
-    
-    return render_template('dashboard.html', 
-                         total_vehiculos=total_vehiculos,
-                         disponibles=disponibles,
-                         vendidos=vendidos,
-                         valor_total=valor_total,
-                         top_marcas=top_marcas,
-                         ultimos_vehiculos=ultimos_vehiculos)
+    registrar_log(session['user_id'], 'VER_SESIONES', 'sesiones', None, 'Visualizó sesiones activas', request.remote_addr)
+    return render_template('sesiones_activas.html', sesiones=sesiones)
 
-@app.route('/exportar_excel')
+@app.route('/cerrar_sesion_usuario/<int:sesion_id>')
 @login_required
 @admin_required
-def exportar_excel():
+def cerrar_sesion_usuario(sesion_id):
     conn = get_db()
-    df = pd.read_sql_query("SELECT * FROM vehiculos", conn)
+    cursor = conn.cursor()
+    cursor.execute('SELECT s.*, u.usuario_id FROM sesiones_activas s JOIN usuarios u ON s.usuario_id = u.id WHERE s.id = ?', (sesion_id,))
+    sesion = cursor.fetchone()
+    if sesion:
+        registrar_log(session['user_id'], 'CERRAR_SESION_REMOTA', 'sesiones', sesion_id, f'Sesión cerrada del usuario {sesion["usuario_id"]}', request.remote_addr)
+        cursor.execute('UPDATE sesiones_activas SET activo = 0, fecha_cierre = CURRENT_TIMESTAMP WHERE id = ?', (sesion_id,))
+        conn.commit()
+        flash('Sesión cerrada', 'success')
     conn.close()
-    
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name='Inventario')
-    
-    output.seek(0)
-    return send_file(output, download_name='inventario.xlsx', as_attachment=True)
+    return redirect(url_for('sesiones_activas'))
 
-@app.route('/descargar_plantilla')
+@app.route('/logs_actividad')
 @login_required
 @admin_required
-def descargar_plantilla():
-    plantilla = pd.DataFrame({
-        'CHASSIS': ['ABC123-456789', 'DEF456-789012'],
-        'ESTATUS': ['DISPONIBLE', 'DISPONIBLE'],
-        'MARCA': ['TOYOTA', 'NISSAN'],
-        'MODELO': ['COROLLA', 'VERSA'],
-        'TIPO': ['SEDAN', 'SEDAN'],
-        'ANO': [2022, 2021],
-        'COLOR': ['ROJO', 'AZUL'],
-        'PRECIO': [15000, 12000],
-        'PRECIO_CONTADO': [14000, 11000],
-        'PRECIO_FINANCIAMIENTO': [16000, 13000],
-        'LOCACION': ['JAPON', 'JAPON'],
-        'PAIS': ['JAPON', 'JAPON'],
-        'BL': ['BL001', 'BL002']
-    })
-    
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        plantilla.to_excel(writer, index=False, sheet_name='Plantilla')
-    
-    output.seek(0)
-    return send_file(output, download_name='plantilla_vehiculos.xlsx', as_attachment=True)
+def logs_actividad():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT l.*, u.usuario_id, u.rol FROM logs_actividad l
+        JOIN usuarios u ON l.usuario_id = u.id ORDER BY l.fecha DESC LIMIT 500
+    ''')
+    logs = cursor.fetchall()
+    cursor.execute("SELECT DISTINCT accion FROM logs_actividad ORDER BY accion")
+    acciones = cursor.fetchall()
+    conn.close()
+    registrar_log(session['user_id'], 'VER_LOGS', 'logs', None, 'Visualizó logs', request.remote_addr)
+    return render_template('logs_actividad.html', logs=logs, acciones=acciones)
 
-@app.route('/importar_vehiculos', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def importar_vehiculos():
-    if request.method == 'POST':
-        if 'archivo' not in request.files:
-            flash('No se seleccionó ningún archivo', 'error')
-            return redirect(url_for('importar_vehiculos'))
-        
-        archivo = request.files['archivo']
-        
-        if archivo.filename == '':
-            flash('No se seleccionó ningún archivo', 'error')
-            return redirect(url_for('importar_vehiculos'))
-        
-        if not allowed_file(archivo.filename):
-            flash('Formato no permitido. Use .xlsx, .xls o .csv', 'error')
-            return redirect(url_for('importar_vehiculos'))
-        
-        try:
-            filename = secure_filename(archivo.filename)
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
-            archivo.save(filepath)
-            
-            if filename.endswith('.csv'):
-                df = pd.read_csv(filepath, encoding='utf-8')
-            else:
-                df = pd.read_excel(filepath)
-            
-            os.remove(filepath)
-            
-            df.columns = df.columns.str.strip().str.upper()
-            
-            conn = get_db()
-            cursor = conn.cursor()
-            
-            vehiculos_agregados = 0
-            vehiculos_omitidos = 0
-            errores = []
-            
-            for idx, row in df.iterrows():
-                try:
-                    chassis = str(row.get('CHASSIS', '')).strip()
-                    marca = str(row.get('MARCA', '')).strip()
-                    modelo = str(row.get('MODELO', '')).strip()
-                    
-                    if not chassis or not marca or not modelo:
-                        errores.append(f"Fila {idx + 2}: Faltan campos requeridos")
-                        vehiculos_omitidos += 1
-                        continue
-                    
-                    cursor.execute("SELECT id FROM vehiculos WHERE chassis = ?", (chassis,))
-                    if cursor.fetchone():
-                        errores.append(f"Fila {idx + 2}: Chassis {chassis} ya existe")
-                        vehiculos_omitidos += 1
-                        continue
-                    
-                    estatus = str(row.get('ESTATUS', 'DISPONIBLE')).upper()
-                    tipo = str(row.get('TIPO', '')) if pd.notna(row.get('TIPO')) else None
-                    ano = int(row.get('ANO', 0)) if pd.notna(row.get('ANO')) else None
-                    color = str(row.get('COLOR', '')) if pd.notna(row.get('COLOR')) else None
-                    precio = float(row.get('PRECIO', 0)) if pd.notna(row.get('PRECIO')) else 0
-                    precio_contado = float(row.get('PRECIO_CONTADO', 0)) if pd.notna(row.get('PRECIO_CONTADO')) else 0
-                    precio_financiamiento = float(row.get('PRECIO_FINANCIAMIENTO', 0)) if pd.notna(row.get('PRECIO_FINANCIAMIENTO')) else 0
-                    locacion = str(row.get('LOCACION', '')) if pd.notna(row.get('LOCACION')) else None
-                    pais = str(row.get('PAIS', 'JAPON')) if pd.notna(row.get('PAIS')) else 'JAPON'
-                    bl = str(row.get('BL', '')) if pd.notna(row.get('BL')) else None
-                    
-                    cursor.execute('''INSERT INTO vehiculos 
-                        (chassis, estatus, marca, modelo, tipo, ano, color, 
-                         precio, precio_contado, precio_financiamiento, locacion, pais, bl) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                        (chassis, estatus, marca, modelo, tipo, ano, color,
-                         precio, precio_contado, precio_financiamiento, locacion, pais, bl))
-                    
-                    vehiculos_agregados += 1
-                    
-                except Exception as e:
-                    errores.append(f"Fila {idx + 2}: Error - {str(e)}")
-                    vehiculos_omitidos += 1
-            
-            conn.commit()
-            conn.close()
-            
-            flash(f'✅ Importación completada: {vehiculos_agregados} vehículos agregados, {vehiculos_omitidos} omitidos', 'success')
-            
-            if errores and len(errores) <= 5:
-                for error in errores:
-                    flash(f'⚠️ {error}', 'error')
-            elif errores:
-                flash(f'⚠️ {len(errores)} errores en total. Revisa el formato del archivo.', 'error')
-            
-            return redirect(url_for('inventario'))
-            
-        except Exception as e:
-            flash(f'Error al leer el archivo: {str(e)}', 'error')
-            return redirect(url_for('importar_vehiculos'))
-    
-    return render_template('importar_vehiculos.html')
-
+# ============ RUTAS DE VEHÍCULOS ============
 @app.route('/agregar_vehiculo', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -470,7 +522,8 @@ def agregar_vehiculo():
              request.form['pais'], request.form['bl']))
         conn.commit()
         conn.close()
-        flash('Vehículo agregado exitosamente', 'success')
+        registrar_log(session['user_id'], 'AGREGAR_VEHICULO', 'vehiculos', None, f'Agregó: {request.form["chassis"]} - {request.form["marca"]} {request.form["modelo"]}', request.remote_addr)
+        flash('Vehículo agregado', 'success')
         return redirect(url_for('inventario'))
     return render_template('agregar_vehiculo.html')
 
@@ -480,22 +533,20 @@ def agregar_vehiculo():
 def editar_vehiculo(id):
     conn = get_db()
     cursor = conn.cursor()
-    
     if request.method == 'POST':
         cursor.execute('''UPDATE vehiculos SET 
             chassis=?, estatus=?, marca=?, modelo=?, tipo=?, ano=?, color=?, 
-            precio=?, precio_contado=?, precio_financiamiento=?, locacion=?, pais=?, bl=? 
-            WHERE id=?''',
+            precio=?, precio_contado=?, precio_financiamiento=?, locacion=?, pais=?, bl=? WHERE id=?''',
             (request.form['chassis'], request.form['estatus'], request.form['marca'],
              request.form['modelo'], request.form['tipo'], request.form['ano'],
              request.form['color'], request.form['precio'], request.form['precio_contado'],
              request.form['precio_financiamiento'], request.form['locacion'],
              request.form['pais'], request.form['bl'], id))
         conn.commit()
+        registrar_log(session['user_id'], 'EDITAR_VEHICULO', 'vehiculos', id, f'Editó vehículo ID {id}', request.remote_addr)
         conn.close()
-        flash('Vehículo actualizado exitosamente', 'success')
+        flash('Vehículo actualizado', 'success')
         return redirect(url_for('inventario'))
-    
     cursor.execute("SELECT * FROM vehiculos WHERE id = ?", (id,))
     vehiculo = cursor.fetchone()
     conn.close()
@@ -507,12 +558,16 @@ def editar_vehiculo(id):
 def eliminar_vehiculo(id):
     conn = get_db()
     cursor = conn.cursor()
+    cursor.execute("SELECT chassis, marca, modelo FROM vehiculos WHERE id = ?", (id,))
+    vehiculo = cursor.fetchone()
     cursor.execute("DELETE FROM vehiculos WHERE id = ?", (id,))
     conn.commit()
     conn.close()
-    flash('Vehículo eliminado correctamente', 'success')
+    registrar_log(session['user_id'], 'ELIMINAR_VEHICULO', 'vehiculos', id, f'Eliminó: {vehiculo["chassis"]} - {vehiculo["marca"]} {vehiculo["modelo"]}', request.remote_addr)
+    flash('Vehículo eliminado', 'success')
     return redirect(url_for('inventario'))
 
+# ============ RUTAS DE USUARIOS ============
 @app.route('/usuarios')
 @login_required
 @admin_required
@@ -522,6 +577,7 @@ def usuarios():
     cursor.execute("SELECT id, usuario_id, rol, fecha_creacion FROM usuarios")
     usuarios = cursor.fetchall()
     conn.close()
+    registrar_log(session['user_id'], 'VER_USUARIOS', 'usuarios', None, 'Visualizó usuarios', request.remote_addr)
     return render_template('usuarios.html', usuarios=usuarios)
 
 @app.route('/crear_usuario', methods=['POST'])
@@ -531,21 +587,18 @@ def crear_usuario():
     usuario_id = request.form['usuario_id']
     contrasena = request.form['contrasena']
     rol = request.form['rol']
-    
-    hashed_password = generate_password_hash(contrasena)
-    
+    hashed = generate_password_hash(contrasena)
     conn = get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute("INSERT INTO usuarios (usuario_id, contrasena, rol) VALUES (?, ?, ?)",
-                      (usuario_id, hashed_password, rol))
+        cursor.execute("INSERT INTO usuarios (usuario_id, contrasena, rol) VALUES (?, ?, ?)", (usuario_id, hashed, rol))
         conn.commit()
-        flash(f'Usuario {usuario_id} creado exitosamente', 'success')
+        registrar_log(session['user_id'], 'CREAR_USUARIO', 'usuarios', cursor.lastrowid, f'Creó usuario: {usuario_id} ({rol})', request.remote_addr)
+        flash(f'Usuario {usuario_id} creado', 'success')
     except:
-        flash('Error: El usuario ya existe', 'error')
+        flash('Error: Usuario existe', 'error')
     finally:
         conn.close()
-    
     return redirect(url_for('usuarios'))
 
 @app.route('/eliminar_usuario/<int:id>')
@@ -553,16 +606,149 @@ def crear_usuario():
 @admin_required
 def eliminar_usuario(id):
     if id == session['user_id']:
-        flash('No puedes eliminar tu propio usuario', 'error')
+        flash('No puedes eliminarte', 'error')
         return redirect(url_for('usuarios'))
-    
     conn = get_db()
     cursor = conn.cursor()
+    cursor.execute("SELECT usuario_id FROM usuarios WHERE id = ?", (id,))
+    usuario = cursor.fetchone()
     cursor.execute("DELETE FROM usuarios WHERE id = ?", (id,))
     conn.commit()
     conn.close()
-    flash('Usuario eliminado correctamente', 'success')
+    registrar_log(session['user_id'], 'ELIMINAR_USUARIO', 'usuarios', id, f'Eliminó usuario: {usuario["usuario_id"]}', request.remote_addr)
+    flash('Usuario eliminado', 'success')
     return redirect(url_for('usuarios'))
+
+# ============ OTRAS RUTAS ============
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) as total FROM vehiculos")
+    total = cursor.fetchone()['total']
+    cursor.execute("SELECT COUNT(*) as total FROM vehiculos WHERE estatus = 'DISPONIBLE'")
+    disponibles = cursor.fetchone()['total']
+    cursor.execute("SELECT COUNT(*) as total FROM vehiculos WHERE estatus = 'VENDIDO'")
+    vendidos = cursor.fetchone()['total']
+    cursor.execute("SELECT SUM(precio) as total FROM vehiculos")
+    valor_total = cursor.fetchone()['total'] or 0
+    cursor.execute("SELECT marca, COUNT(*) as total FROM vehiculos GROUP BY marca ORDER BY total DESC LIMIT 5")
+    top_marcas = cursor.fetchall()
+    cursor.execute("SELECT chassis, marca, modelo, ano, estatus, precio FROM vehiculos ORDER BY id DESC LIMIT 5")
+    ultimos = cursor.fetchall()
+    cursor.execute("SELECT COUNT(*) as total_logs FROM logs_actividad")
+    total_logs = cursor.fetchone()['total_logs']
+    cursor.execute("SELECT COUNT(*) as logs_hoy FROM logs_actividad WHERE DATE(fecha) = DATE('now')")
+    logs_hoy = cursor.fetchone()['logs_hoy']
+    conn.close()
+    registrar_log(session['user_id'], 'VER_DASHBOARD', 'dashboard', None, 'Visualizó dashboard', request.remote_addr)
+    return render_template('dashboard.html', total_vehiculos=total, disponibles=disponibles, vendidos=vendidos, valor_total=valor_total, top_marcas=top_marcas, ultimos_vehiculos=ultimos, total_logs=total_logs, logs_hoy=logs_hoy)
+
+@app.route('/ver_codigo')
+@login_required
+@admin_required
+def ver_codigo():
+    codigo = session.get('codigo_acceso', generar_codigo_acceso(6))
+    registrar_log(session['user_id'], 'VER_CODIGO', 'configuracion', None, 'Visualizó código', request.remote_addr)
+    return render_template('ver_codigo.html', codigo=codigo)
+
+@app.route('/regenerar_codigo')
+@login_required
+@admin_required
+def regenerar_codigo():
+    nuevo = generar_codigo_acceso(6)
+    session['codigo_acceso'] = nuevo
+    registrar_log(session['user_id'], 'REGENERAR_CODIGO', 'configuracion', None, f'Nuevo código: {nuevo}', request.remote_addr)
+    flash(f'Nuevo código: {nuevo}', 'success')
+    return redirect(url_for('ver_codigo'))
+
+@app.route('/exportar_excel')
+@login_required
+@admin_required
+def exportar_excel():
+    conn = get_db()
+    df = pd.read_sql_query("SELECT * FROM vehiculos", conn)
+    conn.close()
+    registrar_log(session['user_id'], 'EXPORTAR_EXCEL', 'vehiculos', None, 'Exportó a Excel', request.remote_addr)
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Inventario')
+    output.seek(0)
+    return send_file(output, download_name='inventario.xlsx', as_attachment=True)
+
+@app.route('/importar_vehiculos', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def importar_vehiculos():
+    if request.method == 'POST':
+        if 'archivo' not in request.files:
+            flash('No hay archivo', 'error')
+            return redirect(url_for('importar_vehiculos'))
+        archivo = request.files['archivo']
+        if archivo.filename == '':
+            flash('No se seleccionó archivo', 'error')
+            return redirect(url_for('importar_vehiculos'))
+        if not allowed_file(archivo.filename):
+            flash('Formato no permitido', 'error')
+            return redirect(url_for('importar_vehiculos'))
+        try:
+            filename = secure_filename(archivo.filename)
+            filepath = os.path.join('uploads', filename)
+            archivo.save(filepath)
+            if filename.endswith('.csv'):
+                df = pd.read_csv(filepath, encoding='utf-8')
+            else:
+                df = pd.read_excel(filepath)
+            os.remove(filepath)
+            df.columns = df.columns.str.strip().str.upper()
+            conn = get_db()
+            cursor = conn.cursor()
+            agregados = 0
+            for idx, row in df.iterrows():
+                try:
+                    chassis = str(row.get('CHASSIS', '')).strip()
+                    marca = str(row.get('MARCA', '')).strip()
+                    modelo = str(row.get('MODELO', '')).strip()
+                    if not chassis or not marca or not modelo:
+                        continue
+                    cursor.execute("SELECT id FROM vehiculos WHERE chassis = ?", (chassis,))
+                    if cursor.fetchone():
+                        continue
+                    estatus = str(row.get('ESTATUS', 'DISPONIBLE')).upper()
+                    tipo = str(row.get('TIPO', '')) if pd.notna(row.get('TIPO')) else None
+                    ano = int(row.get('ANO', 0)) if pd.notna(row.get('ANO')) else None
+                    color = str(row.get('COLOR', '')) if pd.notna(row.get('COLOR')) else None
+                    precio = float(row.get('PRECIO', 0)) if pd.notna(row.get('PRECIO')) else 0
+                    precio_contado = float(row.get('PRECIO_CONTADO', 0)) if pd.notna(row.get('PRECIO_CONTADO')) else 0
+                    precio_financiamiento = float(row.get('PRECIO_FINANCIAMIENTO', 0)) if pd.notna(row.get('PRECIO_FINANCIAMIENTO')) else 0
+                    locacion = str(row.get('LOCACION', '')) if pd.notna(row.get('LOCACION')) else None
+                    pais = str(row.get('PAIS', 'JAPON')) if pd.notna(row.get('PAIS')) else 'JAPON'
+                    bl = str(row.get('BL', '')) if pd.notna(row.get('BL')) else None
+                    cursor.execute('''INSERT INTO vehiculos VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                        (chassis, estatus, marca, modelo, tipo, ano, color, precio, precio_contado, precio_financiamiento, locacion, pais, bl))
+                    agregados += 1
+                except:
+                    pass
+            conn.commit()
+            conn.close()
+            registrar_log(session['user_id'], 'IMPORTAR_VEHICULOS', 'vehiculos', None, f'Importados {agregados} vehículos', request.remote_addr)
+            flash(f'Importados {agregados} vehículos', 'success')
+        except Exception as e:
+            flash(f'Error: {str(e)}', 'error')
+        return redirect(url_for('inventario'))
+    return render_template('importar_vehiculos.html')
+
+@app.route('/descargar_plantilla')
+@login_required
+@admin_required
+def descargar_plantilla():
+    plantilla = pd.DataFrame({'CHASSIS': ['ABC123'], 'MARCA': ['TOYOTA'], 'MODELO': ['COROLLA']})
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        plantilla.to_excel(writer, index=False)
+    output.seek(0)
+    return send_file(output, download_name='plantilla.xlsx', as_attachment=True)
 
 if __name__ == '__main__':
     import socket
@@ -580,5 +766,4 @@ if __name__ == '__main__':
     except:
         print("📍 Servidor: http://localhost:5000")
     print("="*50 + "\n")
-    
     app.run(debug=True, host='0.0.0.0', port=5000)

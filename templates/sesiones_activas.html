@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INVENTAUTOS - Sesiones Activas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .badge-admin {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+        }
+        .badge-normal {
+            background: #6c757d;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+        }
+        .ip-info {
+            font-family: monospace;
+            font-size: 11px;
+        }
+        .mi-sesion {
+            background: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            display: inline-block;
+        }
+        body.dark-mode .mi-sesion {
+            background: #1e3a2e;
+            color: #90ee90;
+        }
+        .btn-cerrar {
+            background: #dc3545;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 11px;
+        }
+        .btn-cerrar:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔐 Sesiones Activas</h1>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button id="themeToggle" class="theme-btn">🌙 Dark</button>
+            <a href="{{ url_for('inventario') }}" class="btn-home">🏠 Home</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Salir</a>
+        </div>
+    </div>
+    
+    <div class="table-container">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Rol</th>
+                        <th>IP</th>
+                        <th>Navegador</th>
+                        <th>Inicio Sesión</th>
+                        <th>Última Actividad</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in sesiones %}
+                    <tr>
+                        <td><strong>{{ s.usuario_id }}</strong></td>
+                        <td><span class="badge-{{ s.rol|lower }}">{{ s.rol }}</span></td>
+                        <td class="ip-info">{{ s.ip or 'Desconocida' }}</td>
+                        <td>{{ s.user_agent[:40] }}{% if s.user_agent and s.user_agent|length > 40 %}...{% endif %}</td>
+                        <td>{{ s.fecha_inicio }}</td>
+                        <td>{{ s.fecha_ultima_actividad }}</td>
+                        <td>
+                            {% if s.usuario_id == session.usuario_id %}
+                                <span class="mi-sesion">✓ Tu sesión</span>
+                            {% else %}
+                                <a href="{{ url_for('cerrar_sesion_usuario', sesion_id=s.id) }}" 
+                                   class="btn-cerrar" 
+                                   onclick="return confirm('¿Cerrar esta sesión?')">🚪 Cerrar</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if sesiones|length == 0 %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px;">No hay sesiones activas</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="info-card" style="margin-top: 20px; padding: 15px; background: var(--bg-card); border-radius: 12px;">
+        <div style="font-weight: 600; margin-bottom: 10px;">ℹ️ Información</div>
+        <ul style="margin-left: 20px; color: var(--text-secondary); font-size: 12px;">
+            <li>🔒 Un mismo usuario no puede tener múltiples sesiones activas</li>
+            <li>🔄 Al iniciar sesión en otro dispositivo, la sesión anterior se cierra</li>
+            <li>⏰ Las sesiones expiran después de 24 horas sin actividad</li>
+            <li>👑 Como administrador puedes cerrar sesiones de otros usuarios</li>
+        </ul>
+    </div>
+    
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            const btn = document.getElementById('themeToggle');
+            if (btn) {
+                btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+            }
+        }
+        
+        const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (savedDarkMode) {
+            document.body.classList.add('dark-mode');
+            const btn = document.getElementById('themeToggle');
+            if (btn) {
+                btn.textContent = '☀️ Light';
+            }
+        }
+        
+        const toggleBtn = document.getElementById('themeToggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', toggleTheme);
+        }
+    </script>
+</body>
+</html>

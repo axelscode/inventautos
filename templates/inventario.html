@@ -128,6 +128,10 @@
             <a href="{{ url_for('exportar_excel') }}" class="btn-excel">📎 Exportar Excel</a>
             <a href="{{ url_for('importar_vehiculos') }}" class="btn-importar">📥 Importar</a>
             <a href="{{ url_for('ver_codigo') }}" class="btn-codigo">🔐 Código</a>
+            <a href="{{ url_for('logs_actividad') }}" class="btn-usuarios" style="background: #fd7e14;">📋 Logs</a>
+            <a href="{{ url_for('lista_backups') }}" class="btn-usuarios" style="background: #fd7e14;">💾 Backups</a>
+            <a href="{{ url_for('sesiones_activas') }}" class="btn-usuarios" style="background: #fd7e14;">🔐 Sesiones</a>
+
         {% endif %}
     </div>
     
