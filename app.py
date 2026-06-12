@@ -5,6 +5,9 @@ import os
 import pandas as pd
 from io import BytesIO
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+import random
+import string
 
 app = Flask(__name__)
 app.secret_key = 'inventautos_secret_key_2024'
@@ -16,24 +19,32 @@ DATABASE = 'inventautos.db'
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'csv'}
 
-# Crear carpeta de uploads si no existe
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Función para conectar a SQLite
+# ============ FUNCIONES CAPTCHA Y CÓDIGO ============
+def generar_captcha():
+    """Genera un código CAPTCHA simple de 5 dígitos"""
+    texto = ''.join(str(random.randint(0, 9)) for _ in range(5))
+    session['captcha_texto'] = texto
+    return texto
+
+def generar_codigo_acceso(longitud=6):
+    """Genera un código de acceso aleatorio de 6 dígitos"""
+    return ''.join(str(random.randint(0, 9)) for _ in range(longitud))
+
+# ============ BASE DE DATOS ============
 def get_db():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
 
-# Inicializar base de datos
 def init_db():
     conn = get_db()
     cursor = conn.cursor()
     
-    # Crear tabla usuarios
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,7 +55,6 @@ def init_db():
         )
     ''')
     
-    # Crear tabla vehiculos
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS vehiculos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,19 +74,21 @@ def init_db():
         )
     ''')
     
-    # Insertar usuario admin si no existe
+    # Usuario admin
     cursor.execute("SELECT * FROM usuarios WHERE usuario_id = 'admin'")
     if not cursor.fetchone():
+        hashed_password = generate_password_hash('admin123')
         cursor.execute("INSERT INTO usuarios (usuario_id, contrasena, rol) VALUES (?, ?, ?)",
-                      ('admin', 'admin123', 'ADMIN'))
+                      ('admin', hashed_password, 'ADMIN'))
     
-    # Insertar usuario normal de ejemplo
+    # Usuario normal
     cursor.execute("SELECT * FROM usuarios WHERE usuario_id = 'usuario1'")
     if not cursor.fetchone():
+        hashed_password = generate_password_hash('user123')
         cursor.execute("INSERT INTO usuarios (usuario_id, contrasena, rol) VALUES (?, ?, ?)",
-                      ('usuario1', 'user123', 'NORMAL'))
+                      ('usuario1', hashed_password, 'NORMAL'))
     
-    # Insertar vehículos de ejemplo
+    # Vehículos de ejemplo
     cursor.execute("SELECT * FROM vehiculos LIMIT 1")
     if not cursor.fetchone():
         vehiculos_ejemplo = [
@@ -91,10 +103,9 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Inicializar BD al iniciar
 init_db()
 
-# Decoradores
+# ============ DECORADORES ============
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -113,38 +124,67 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Rutas
+# ============ RUTAS ============
+@app.route('/captcha')
+def captcha():
+    """Genera un CAPTCHA de solo texto"""
+    texto = generar_captcha()
+    return texto
+
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # Inicializar código de acceso si no existe
+    if 'codigo_acceso' not in session:
+        session['codigo_acceso'] = generar_codigo_acceso(6)
+    
     if request.method == 'POST':
         usuario_id = request.form.get('usuario_id', '').strip()
         contrasena = request.form.get('contrasena', '').strip()
-        codigo = request.form.get('codigo', '').strip()
+        captcha_usuario = request.form.get('captcha', '').strip()
+        captcha_guardado = session.get('captcha_texto', '')
         
-        CODIGO_VALIDO = '1234'
-        
-        if codigo != CODIGO_VALIDO:
-            flash('Código de seguridad incorrecto', 'error')
-            return render_template('login.html')
+        if captcha_usuario != captcha_guardado:
+            flash('Código de verificación incorrecto', 'error')
+            return render_template('login.html', captcha_texto=session.get('captcha_texto', ''))
         
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM usuarios WHERE usuario_id = ? AND contrasena = ?", (usuario_id, contrasena))
+        cursor.execute("SELECT * FROM usuarios WHERE usuario_id = ?", (usuario_id,))
         user = cursor.fetchone()
         conn.close()
         
-        if user:
+        if user and check_password_hash(user['contrasena'], contrasena):
             session.clear()
             session['user_id'] = user['id']
             session['usuario_id'] = user['usuario_id']
             session['rol'] = user['rol']
+            session['codigo_acceso'] = generar_codigo_acceso(6)
             flash(f'¡Bienvenido {usuario_id}!', 'success')
             return redirect(url_for('inventario'))
         else:
             flash('Usuario o contraseña incorrectos', 'error')
     
-    return render_template('login.html')
+    generar_captcha()
+    return render_template('login.html', captcha_texto=session.get('captcha_texto', ''))
+
+@app.route('/ver_codigo')
+@login_required
+@admin_required
+def ver_codigo():
+    """Muestra el código de acceso actual"""
+    codigo = session.get('codigo_acceso', generar_codigo_acceso(6))
+    return render_template('ver_codigo.html', codigo=codigo)
+
+@app.route('/regenerar_codigo')
+@login_required
+@admin_required
+def regenerar_codigo():
+    """Regenera un nuevo código de acceso"""
+    nuevo_codigo = generar_codigo_acceso(6)
+    session['codigo_acceso'] = nuevo_codigo
+    flash(f'Nuevo código de acceso generado: {nuevo_codigo}', 'success')
+    return redirect(url_for('ver_codigo'))
 
 @app.route('/logout')
 def logout():
@@ -447,11 +487,13 @@ def crear_usuario():
     contrasena = request.form['contrasena']
     rol = request.form['rol']
     
+    hashed_password = generate_password_hash(contrasena)
+    
     conn = get_db()
     cursor = conn.cursor()
     try:
         cursor.execute("INSERT INTO usuarios (usuario_id, contrasena, rol) VALUES (?, ?, ?)",
-                      (usuario_id, contrasena, rol))
+                      (usuario_id, hashed_password, rol))
         conn.commit()
         flash(f'Usuario {usuario_id} creado exitosamente', 'success')
     except:
@@ -477,26 +519,21 @@ def eliminar_usuario(id):
     flash('Usuario eliminado correctamente', 'success')
     return redirect(url_for('usuarios'))
 
-
 if __name__ == '__main__':
     import socket
+    print("\n" + "="*50)
+    print("🚗 INVENTAUTOS - Servidor iniciado")
+    print("="*50)
     try:
         hostname = socket.gethostname()
         local_ip = socket.gethostbyname(hostname)
-        print("\n" + "="*50)
-        print("🚗 INVENTAUTOS - Servidor iniciado")
-        print("="*50)
         print(f"📍 Local:   http://localhost:5000")
         print(f"📍 Red:     http://{local_ip}:5000")
         print("\n📱 PARA ACCEDER DESDE CELULAR:")
         print(f"   1. Conecta tu celular al mismo WiFi")
         print(f"   2. Abre el navegador en: http://{local_ip}:5000")
-        print("="*50 + "\n")
     except:
-        print("Servidor iniciado en http://localhost:5000")
+        print("📍 Servidor: http://localhost:5000")
+    print("="*50 + "\n")
     
     app.run(debug=True, host='0.0.0.0', port=5000)
-    
-
-#if __name__ == '__main__':
- #   app.run(debug=True, port=5000)

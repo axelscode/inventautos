@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INVENTAUTOS - Código de Acceso</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .codigo-container { max-width: 500px; margin: 50px auto; }
+        .codigo-card { background: var(--bg-card); border-radius: 20px; padding: 30px; text-align: center; }
+        .codigo-titulo { font-size: 24px; color: #667eea; margin-bottom: 20px; }
+        .codigo-valor { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 48px; font-weight: bold; letter-spacing: 5px; padding: 20px; border-radius: 15px; margin: 20px 0; font-family: monospace; }
+        .btn-regenerar { background: #ffc107; color: #333; padding: 12px 25px; border-radius: 10px; text-decoration: none; display: inline-block; margin: 10px; }
+        .btn-volver { background: #6c757d; color: white; padding: 12px 25px; border-radius: 10px; text-decoration: none; display: inline-block; margin: 10px; }
+        .advertencia { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 8px; margin-top: 20px; font-size: 12px; }
+        body.dark-mode .advertencia { background: #3a1e24; color: #ff9999; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔐 Código de Acceso</h1>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button id="themeToggle" class="theme-btn">🌙 Dark</button>
+            <a href="{{ url_for('inventario') }}" class="btn-home">🏠 Home</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Salir</a>
+        </div>
+    </div>
+    <div class="codigo-container">
+        <div class="codigo-card">
+            <div class="codigo-titulo">📋 Código de Seguridad</div>
+            <div class="codigo-valor">{{ codigo }}</div>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Este código es necesario para iniciar sesión junto con usuario y contraseña.</p>
+            <div>
+                <a href="{{ url_for('regenerar_codigo') }}" class="btn-regenerar" onclick="return confirm('¿Generar un nuevo código? El anterior dejará de funcionar')">🔄 Regenerar Código</a>
+                <a href="{{ url_for('inventario') }}" class="btn-volver">← Volver al Inventario</a>
+            </div>
+            <div class="advertencia">⚠️ Al regenerar el código, el anterior dejará de ser válido. Comparte el nuevo código con quien necesite acceso.</div>
+        </div>
+    </div>
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+        }
+        const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (savedDarkMode) {
+            document.body.classList.add('dark-mode');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = '☀️ Light';
+        }
+        const toggleBtn = document.getElementById('themeToggle');
+        if (toggleBtn) toggleBtn.addEventListener('click', toggleTheme);
+    </script>
+</body>
+</html>

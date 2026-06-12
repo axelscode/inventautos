@@ -6,72 +6,30 @@
     <title>INVENTAUTOS - Inventario</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        /* Estilos adicionales para el inventario */
         .stats-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
-        
         .stat-card {
             background: var(--bg-card);
             border-radius: 12px;
             padding: 15px;
             text-align: center;
-            transition: transform 0.2s;
         }
-        
-        .stat-card:hover {
-            transform: translateY(-2px);
-        }
-        
         .stat-card .number {
             font-size: 28px;
             font-weight: bold;
             color: #667eea;
         }
-        
         .stat-card .label {
             font-size: 12px;
             color: var(--text-secondary);
-            margin-top: 5px;
         }
-        
-        .filtros-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .filtros-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 12px;
-        }
-        
-        .btn-excel {
-            background: #28a745;
-            color: white;
-            padding: 6px 15px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 12px;
-            margin-left: 10px;
-        }
-        
-        .btn-excel:hover {
-            background: #218838;
-        }
+        .btn-excel { background: #28a745; color: white; padding: 6px 15px; border-radius: 8px; text-decoration: none; font-size: 12px; margin-left: 10px; }
+        .btn-importar { background: #ffc107; color: #333; padding: 6px 15px; border-radius: 8px; text-decoration: none; font-size: 12px; margin-left: 10px; }
+        .btn-codigo { background: #17a2b8; color: white; padding: 6px 15px; border-radius: 8px; text-decoration: none; font-size: 12px; margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -85,36 +43,27 @@
         </div>
     </div>
     
-    <!-- Tarjetas de estadísticas -->
     <div class="stats-cards">
-        <div class="stat-card">
-            <div class="number">{{ vehiculos|length }}</div>
-            <div class="label">Total Vehículos</div>
-        </div>
-        <div class="stat-card">
-            <div class="number">{{ vehiculos|selectattr('estatus', 'equalto', 'DISPONIBLE')|list|length }}</div>
-            <div class="label">Disponibles</div>
-        </div>
+        <div class="stat-card"><div class="number">{{ vehiculos|length }}</div><div class="label">Total Vehículos</div></div>
+        <div class="stat-card"><div class="number">{{ vehiculos|selectattr('estatus', 'equalto', 'DISPONIBLE')|list|length }}</div><div class="label">Disponibles</div></div>
     </div>
     
-    <!-- Toolbar -->
     <div class="toolbar">
         {% if rol == 'ADMIN' %}
             <a href="{{ url_for('agregar_vehiculo') }}" class="btn-agregar">+ Agregar Vehículo</a>
             <a href="{{ url_for('usuarios') }}" class="btn-usuarios">👥 Usuarios</a>
             <a href="{{ url_for('dashboard') }}" class="btn-usuarios">📊 Dashboard</a>
             <a href="{{ url_for('exportar_excel') }}" class="btn-excel">📎 Exportar Excel</a>
-            <a href="{{ url_for('importar_vehiculos') }}" class="btn-usuarios" style="background: #ffc107; color: #333;">📥 Importar</a>
+            <a href="{{ url_for('importar_vehiculos') }}" class="btn-importar">📥 Importar</a>
+            <a href="{{ url_for('ver_codigo') }}" class="btn-codigo">🔐 Código</a>
         {% endif %}
     </div>
     
-    <!-- Filtros -->
     <div class="filtros-card">
         <div class="filtros-title">🔍 Buscar Vehículos</div>
         <form method="GET" action="{{ url_for('inventario') }}">
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <input type="text" name="buscar" placeholder="Buscar por chassis, marca, modelo..." 
-                       value="{{ request.args.get('buscar', '') }}" style="flex: 2;">
+                <input type="text" name="buscar" placeholder="Buscar por chassis, marca, modelo..." value="{{ request.args.get('buscar', '') }}" style="flex: 2;">
                 <select name="marca">
                     <option value="">Todas las marcas</option>
                     <option value="TOYOTA" {% if request.args.get('marca') == 'TOYOTA' %}selected{% endif %}>TOYOTA</option>
@@ -134,7 +83,6 @@
         </form>
     </div>
     
-    <!-- Mensajes flash -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -143,28 +91,15 @@
         {% endif %}
     {% endwith %}
     
-    <!-- Tabla -->
     <div class="table-container">
         <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
-                        <th>Chassis</th>
-                        <th>Status</th>
-                        <th>Marca</th>
-                        <th>Modelo</th>
-                        <th>Tipo</th>
-                        <th>Año</th>
-                        <th>Color</th>
-                        <th>Precio</th>
-                        <th>Precio C</th>
-                        <th>Precio F</th>
-                        <th>Locación</th>
-                        <th>País</th>
-                        <th>BL</th>
-                        {% if rol == 'ADMIN' %}
-                            <th>Acciones</th>
-                        {% endif %}
+                        <th>Chassis</th><th>Status</th><th>Marca</th><th>Modelo</th><th>Tipo</th><th>Año</th>
+                        <th>Color</th><th>Precio</th><th>Precio C</th><th>Precio F</th>
+                        <th>Locación</th><th>País</th><th>BL</th>
+                        {% if rol == 'ADMIN' %}<th>Acciones</th>{% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -172,17 +107,13 @@
                     <tr>
                         <td>{{ v.chassis }}</td>
                         <td><span class="status-disponible">{{ v.estatus }}</span></td>
-                        <td>{{ v.marca }}</td>
-                        <td>{{ v.modelo }}</td>
-                        <td>{{ v.tipo }}</td>
-                        <td>{{ v.ano }}</td>
-                        <td>{{ v.color }}</td>
+                        <td>{{ v.marca }}</td><td>{{ v.modelo }}</td><td>{{ v.tipo }}</td>
+                        <td>{{ v.ano }}</td><td>{{ v.color }}</td>
                         <td>${{ '{:,.0f}'.format(v.precio) }}</td>
                         <td>${{ '{:,.0f}'.format(v.precio_contado) }}</td>
                         <td>${{ '{:,.0f}'.format(v.precio_financiamiento) }}</td>
                         <td>{{ v.locacion[:20] }}{% if v.locacion and v.locacion|length > 20 %}...{% endif %}</td>
-                        <td>{{ v.pais }}</td>
-                        <td>{{ v.bl[:12] }}{% if v.bl and v.bl|length > 12 %}...{% endif %}</td>
+                        <td>{{ v.pais }}</td><td>{{ v.bl[:12] }}{% if v.bl and v.bl|length > 12 %}...{% endif %}</td>
                         {% if rol == 'ADMIN' %}
                         <td>
                             <a href="{{ url_for('editar_vehiculo', id=v.id) }}" class="btn-editar">Editar</a>
@@ -202,24 +133,16 @@
             const isDark = document.body.classList.contains('dark-mode');
             localStorage.setItem('darkMode', isDark);
             const btn = document.getElementById('themeToggle');
-            if (btn) {
-                btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
-            }
+            if (btn) btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
         }
-        
         const savedDarkMode = localStorage.getItem('darkMode') === 'true';
         if (savedDarkMode) {
             document.body.classList.add('dark-mode');
             const btn = document.getElementById('themeToggle');
-            if (btn) {
-                btn.textContent = '☀️ Light';
-            }
+            if (btn) btn.textContent = '☀️ Light';
         }
-        
         const toggleBtn = document.getElementById('themeToggle');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', toggleTheme);
-        }
+        if (toggleBtn) toggleBtn.addEventListener('click', toggleTheme);
     </script>
 </body>
 </html>

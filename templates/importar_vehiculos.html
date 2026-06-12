@@ -6,347 +6,58 @@
     <title>INVENTAUTOS - Importar Vehículos</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        .import-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .import-card {
-            background: var(--bg-card);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 20px;
-        }
-        
-        .import-title {
-            font-size: 24px;
-            color: #667eea;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .upload-area {
-            border: 2px dashed var(--border-color);
-            border-radius: 16px;
-            padding: 40px;
-            text-align: center;
-            margin-bottom: 25px;
-            transition: all 0.3s ease;
-            background: var(--bg-card);
-        }
-        
-        .upload-area:hover {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
-        }
-        
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-        
-        .upload-text {
-            color: var(--text-secondary);
-            margin-bottom: 15px;
-        }
-        
-        .file-input {
-            display: none;
-        }
-        
-        .file-label {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 25px;
-            border-radius: 10px;
-            cursor: pointer;
-            display: inline-block;
-            font-weight: 600;
-        }
-        
-        .file-name {
-            margin-top: 15px;
-            color: var(--text-primary);
-            font-size: 13px;
-        }
-        
-        .btn-importar {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            border: none;
-            padding: 14px 30px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            width: 100%;
-        }
-        
-        .btn-importar:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .template-card {
-            background: var(--bg-card);
-            border-radius: 20px;
-            padding: 25px;
-        }
-        
-        .template-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .template-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .template-table th {
-            background: var(--table-header);
-            color: white;
-            padding: 8px;
-            text-align: left;
-        }
-        
-        .template-table td {
-            padding: 8px;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-primary);
-        }
-        
-        .btn-descargar {
-            background: #17a2b8;
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            display: inline-block;
-            margin-top: 10px;
-        }
-        
-        .info-box {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        
-        body.dark-mode .info-box {
-            background: #1e3a5f;
-            border-left-color: #667eea;
-        }
-        
-        .info-box p {
-            margin: 5px 0;
-            font-size: 13px;
-            color: var(--text-primary);
-        }
-        
-        .campos-lista {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .campo-tag {
-            background: var(--border-color);
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 11px;
-            color: var(--text-primary);
-        }
-        
-        .campo-requerido {
-            background: #dc3545;
-            color: white;
-        }
+        .import-container { max-width: 800px; margin: 0 auto; }
+        .import-card { background: var(--bg-card); border-radius: 20px; padding: 30px; margin-bottom: 20px; }
+        .import-title { font-size: 24px; color: #667eea; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--border-color); }
+        .upload-area { border: 2px dashed var(--border-color); border-radius: 16px; padding: 40px; text-align: center; margin-bottom: 25px; }
+        .upload-icon { font-size: 48px; margin-bottom: 15px; }
+        .file-input { display: none; }
+        .file-label { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 25px; border-radius: 10px; cursor: pointer; display: inline-block; font-weight: 600; }
+        .btn-importar { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 14px 30px; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600; width: 100%; }
+        .template-card { background: var(--bg-card); border-radius: 20px; padding: 25px; }
+        .btn-descargar { background: #17a2b8; color: white; text-decoration: none; padding: 10px 20px; border-radius: 8px; display: inline-block; margin-top: 10px; }
+        .info-box { background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        body.dark-mode .info-box { background: #1e3a5f; }
+        .campo-tag { display: inline-block; background: var(--border-color); padding: 4px 10px; border-radius: 15px; font-size: 11px; margin: 3px; color: var(--text-primary); }
+        .campo-requerido { background: #dc3545; color: white; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>📥 Importar Vehículos</h1>
-            <div style="display: flex; align-items: center; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
             <button id="themeToggle" class="theme-btn">🌙 Dark</button>
             <a href="{{ url_for('inventario') }}" class="btn-home">🏠 Home</a>
             <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Salir</a>
         </div>
     </div>
-    
     <div class="import-container">
-        <!-- Formulario de importación -->
         <div class="import-card">
-            <div class="import-title">
-                📂 Subir Archivo
-            </div>
-            
-            <div class="info-box">
-                <p>📌 <strong>Instrucciones:</strong></p>
-                <p>• El archivo debe ser .xlsx, .xls o .csv</p>
-                <p>• Los campos requeridos son: <strong>CHASSIS, MARCA, MODELO</strong></p>
-                <p>• Los nombres de las columnas pueden estar en mayúsculas o minúsculas</p>
-                <p>• Si un vehículo ya existe (mismo CHASSIS), se omitirá</p>
-            </div>
-            
-            <form method="POST" action="{{ url_for('importar_vehiculos') }}" enctype="multipart/form-data" id="importForm">
-                <div class="upload-area" id="uploadArea">
-                    <div class="upload-icon">📄</div>
-                    <div class="upload-text">
-                        Arrastra tu archivo aquí o haz clic para seleccionar
-                    </div>
-                    <input type="file" name="archivo" id="archivo" class="file-input" accept=".xlsx,.xls,.csv" required>
-                    <label for="archivo" class="file-label">📁 Seleccionar archivo</label>
-                    <div class="file-name" id="fileName">Ningún archivo seleccionado</div>
-                </div>
-                
-                <button type="submit" class="btn-importar" id="importBtn">🚀 Importar Vehículos</button>
+            <div class="import-title">📂 Subir Archivo</div>
+            <div class="info-box"><p>📌 <strong>Instrucciones:</strong> El archivo debe ser .xlsx, .xls o .csv. Campos requeridos: <strong>CHASSIS, MARCA, MODELO</strong></p></div>
+            <form method="POST" action="{{ url_for('importar_vehiculos') }}" enctype="multipart/form-data">
+                <div class="upload-area" id="uploadArea"><div class="upload-icon">📄</div><div class="upload-text">Arrastra tu archivo aquí o haz clic para seleccionar</div>
+                <input type="file" name="archivo" id="archivo" class="file-input" accept=".xlsx,.xls,.csv" required>
+                <label for="archivo" class="file-label">📁 Seleccionar archivo</label>
+                <div class="file-name" id="fileName">Ningún archivo seleccionado</div></div>
+                <button type="submit" class="btn-importar">🚀 Importar Vehículos</button>
             </form>
         </div>
-        
-        <!-- Plantilla de ejemplo -->
-        <div class="template-card">
-            <div class="template-title">
-                📋 Plantilla de Ejemplo
-            </div>
-            
-            <table class="template-table">
-                <thead>
-                    <tr>
-                        <th>CHASSIS*</th>
-                        <th>MARCA*</th>
-                        <th>MODELO*</th>
-                        <th>ESTATUS</th>
-                        <th>TIPO</th>
-                        <th>AÑO</th>
-                        <th>COLOR</th>
-                        <th>PRECIO</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>ABC123-456789</td>
-                        <td>TOYOTA</td>
-                        <td>COROLLA</td>
-                        <td>DISPONIBLE</td>
-                        <td>SEDAN</td>
-                        <td>2022</td>
-                        <td>ROJO</td>
-                        <td>15000</td>
-                    </tr>
-                    <tr>
-                        <td>DEF456-789012</td>
-                        <td>NISSAN</td>
-                        <td>VERSA</td>
-                        <td>DISPONIBLE</td>
-                        <td>SEDAN</td>
-                        <td>2021</td>
-                        <td>AZUL</td>
-                        <td>12000</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div class="campos-lista">
-                <span class="campo-tag campo-requerido">CHASSIS *</span>
-                <span class="campo-tag campo-requerido">MARCA *</span>
-                <span class="campo-tag campo-requerido">MODELO *</span>
-                <span class="campo-tag">ESTATUS</span>
-                <span class="campo-tag">TIPO</span>
-                <span class="campo-tag">ANO</span>
-                <span class="campo-tag">COLOR</span>
-                <span class="campo-tag">PRECIO</span>
-                <span class="campo-tag">PRECIO_CONTADO</span>
-                <span class="campo-tag">PRECIO_FINANCIAMIENTO</span>
-                <span class="campo-tag">LOCACION</span>
-                <span class="campo-tag">PAIS</span>
-                <span class="campo-tag">BL</span>
-            </div>
-            
-            <div style="text-align: center; margin-top: 20px;">
-                <a href="{{ url_for('descargar_plantilla') }}" class="btn-descargar">📎 Descargar Plantilla Excel</a>
-            </div>
+        <div class="template-card"><div class="import-title" style="font-size:18px">📋 Plantilla de Ejemplo</div>
+            <div><span class="campo-tag campo-requerido">CHASSIS *</span><span class="campo-tag campo-requerido">MARCA *</span><span class="campo-tag campo-requerido">MODELO *</span><span class="campo-tag">ESTATUS</span><span class="campo-tag">TIPO</span><span class="campo-tag">ANO</span><span class="campo-tag">COLOR</span><span class="campo-tag">PRECIO</span><span class="campo-tag">PRECIO_CONTADO</span><span class="campo-tag">PRECIO_FINANCIAMIENTO</span><span class="campo-tag">LOCACION</span><span class="campo-tag">PAIS</span><span class="campo-tag">BL</span></div>
+            <div style="text-align: center; margin-top: 20px;"><a href="{{ url_for('descargar_plantilla') }}" class="btn-descargar">📎 Descargar Plantilla Excel</a></div>
         </div>
     </div>
-    
     <script>
-        // Mostrar nombre del archivo seleccionado
-        const fileInput = document.getElementById('archivo');
-        const fileName = document.getElementById('fileName');
-        const importBtn = document.getElementById('importBtn');
-        
-        fileInput.addEventListener('change', function(e) {
-            if (this.files && this.files[0]) {
-                fileName.textContent = this.files[0].name;
-            } else {
-                fileName.textContent = 'Ningún archivo seleccionado';
-            }
-        });
-        
-        // Drag & drop
+        const fileInput = document.getElementById('archivo'); const fileName = document.getElementById('fileName');
+        fileInput.addEventListener('change', function(e) { if (this.files && this.files[0]) fileName.textContent = this.files[0].name; else fileName.textContent = 'Ningún archivo seleccionado'; });
         const uploadArea = document.getElementById('uploadArea');
-        
-        uploadArea.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            this.style.borderColor = '#667eea';
-            this.style.background = 'rgba(102, 126, 234, 0.05)';
-        });
-        
-        uploadArea.addEventListener('dragleave', function(e) {
-            e.preventDefault();
-            this.style.borderColor = 'var(--border-color)';
-            this.style.background = 'var(--bg-card)';
-        });
-        
-        uploadArea.addEventListener('drop', function(e) {
-            e.preventDefault();
-            this.style.borderColor = 'var(--border-color)';
-            this.style.background = 'var(--bg-card)';
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                fileInput.files = files;
-                fileName.textContent = files[0].name;
-            }
-        });
-        
-        // Theme toggle
-        function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            localStorage.setItem('darkMode', isDark);
-            const btn = document.getElementById('themeToggle');
-            if (btn) {
-                btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
-            }
-        }
-        
-        const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-        if (savedDarkMode) {
-            document.body.classList.add('dark-mode');
-            const btn = document.getElementById('themeToggle');
-            if (btn) {
-                btn.textContent = '☀️ Light';
-            }
-        }
-        
-        const toggleBtn = document.getElementById('themeToggle');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', toggleTheme);
-        }
+        uploadArea.addEventListener('dragover', function(e) { e.preventDefault(); this.style.borderColor = '#667eea'; });
+        uploadArea.addEventListener('dragleave', function(e) { e.preventDefault(); this.style.borderColor = 'var(--border-color)'; });
+        uploadArea.addEventListener('drop', function(e) { e.preventDefault(); const files = e.dataTransfer.files; if (files.length > 0) { fileInput.files = files; fileName.textContent = files[0].name; } });
+        function toggleTheme() { document.body.classList.toggle('dark-mode'); const isDark = document.body.classList.contains('dark-mode'); localStorage.setItem('darkMode', isDark); const btn = document.getElementById('themeToggle'); if (btn) btn.textContent = isDark ? '☀️ Light' : '🌙 Dark'; }
+        const savedDarkMode = localStorage.getItem('darkMode') === 'true'; if (savedDarkMode) { document.body.classList.add('dark-mode'); const btn = document.getElementById('themeToggle'); if (btn) btn.textContent = '☀️ Light'; }
+        const toggleBtn = document.getElementById('themeToggle'); if (toggleBtn) toggleBtn.addEventListener('click', toggleTheme);
     </script>
 </body>
 </html>

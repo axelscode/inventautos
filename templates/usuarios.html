@@ -6,232 +6,59 @@
     <title>INVENTAUTOS - Gestión de Usuarios</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        /* Estilos específicos para usuarios */
-        .usuarios-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .form-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 25px;
-        }
-        
-        .form-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #667eea;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .form-row {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: flex-end;
-        }
-        
-        .form-group {
-            flex: 1;
-            min-width: 180px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-primary);
-            font-weight: 600;
-            font-size: 13px;
-        }
-        
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background: var(--bg-card);
-            color: var(--text-primary);
-        }
-        
-        .form-group input:focus, .form-group select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .btn-crear {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 10px 25px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        
-        .btn-crear:hover {
-            opacity: 0.9;
-        }
-        
-        .table-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 20px;
-        }
-        
-        .table-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--border-color);
-        }
-        
-        .table-wrapper {
-            overflow-x: auto;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        th {
-            background: var(--table-header);
-            color: white;
-            padding: 12px 8px;
-            text-align: left;
-            font-size: 13px;
-        }
-        
-        td {
-            padding: 10px 8px;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-primary);
-            font-size: 13px;
-        }
-        
-        .rol-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        
-        .rol-admin {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .rol-normal {
-            background: #6c757d;
-            color: white;
-        }
-        
-        .btn-eliminar-usuario {
-            background: #dc3545;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 12px;
-        }
-        
-        .btn-eliminar-usuario:hover {
-            background: #c82333;
-        }
-        
-        .empty-row td {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-secondary);
-        }
+        .usuarios-container { max-width: 1200px; margin: 0 auto; }
+        .form-card { background: var(--bg-card); border-radius: 16px; padding: 25px; margin-bottom: 25px; }
+        .form-title { font-size: 18px; font-weight: 600; color: #667eea; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--border-color); }
+        .form-row { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
+        .form-group { flex: 1; min-width: 180px; }
+        .form-group label { display: block; margin-bottom: 8px; color: var(--text-primary); font-weight: 600; font-size: 13px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); }
+        .btn-crear { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 10px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .table-card { background: var(--bg-card); border-radius: 16px; padding: 20px; }
+        .table-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--border-color); }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: var(--table-header); color: white; padding: 12px 8px; text-align: left; font-size: 13px; }
+        td { padding: 10px 8px; border-bottom: 1px solid var(--border-color); color: var(--text-primary); font-size: 13px; }
+        .rol-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .rol-admin { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .rol-normal { background: #6c757d; color: white; }
+        .btn-eliminar-usuario { background: #dc3545; color: white; padding: 4px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; }
     </style>
 </head>
 <body>
     <div class="header">
-    <h1>👥 Gestión de Usuarios</h1>
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <button id="themeToggle" class="theme-btn">🌙 Dark</button>
-        <a href="{{ url_for('inventario') }}" class="btn-home">🏠 Home</a>
-        <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Salir</a>
-     </div>
+        <h1>👥 Gestión de Usuarios</h1>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button id="themeToggle" class="theme-btn">🌙 Dark</button>
+            <a href="{{ url_for('inventario') }}" class="btn-home">🏠 Home</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Salir</a>
+        </div>
     </div>
-    
     <div class="usuarios-container">
-        <!-- Formulario para crear usuario -->
         <div class="form-card">
-            <div class="form-title">
-                ➕ Crear Nuevo Usuario
-            </div>
+            <div class="form-title">➕ Crear Nuevo Usuario</div>
             <form method="POST" action="{{ url_for('crear_usuario') }}">
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>Usuario ID</label>
-                        <input type="text" name="usuario_id" placeholder="Ej: juan.perez" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Contraseña</label>
-                        <input type="password" name="contrasena" placeholder="••••••" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Rol</label>
-                        <select name="rol">
-                            <option value="NORMAL">NORMAL</option>
-                            <option value="ADMIN">ADMIN</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" class="btn-crear">✓ Crear Usuario</button>
-                    </div>
+                    <div class="form-group"><label>Usuario ID</label><input type="text" name="usuario_id" placeholder="Ej: juan.perez" required></div>
+                    <div class="form-group"><label>Contraseña</label><input type="password" name="contrasena" placeholder="••••••" required></div>
+                    <div class="form-group"><label>Rol</label><select name="rol"><option value="NORMAL">NORMAL</option><option value="ADMIN">ADMIN</option></select></div>
+                    <div class="form-group"><button type="submit" class="btn-crear">✓ Crear Usuario</button></div>
                 </div>
             </form>
         </div>
-        
-        <!-- Tabla de usuarios -->
         <div class="table-card">
-            <div class="table-title">
-                📋 Usuarios del Sistema
-            </div>
+            <div class="table-title">📋 Usuarios del Sistema</div>
             <div class="table-wrapper">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Usuario</th>
-                            <th>Rol</th>
-                            <th>Fecha Creación</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>ID</th><th>Usuario</th><th>Rol</th><th>Fecha Creación</th><th>Acciones</th></tr></thead>
                     <tbody>
                         {% for u in usuarios %}
                         <tr>
-                            <td>{{ u.id }}</td>
-                            <td><strong>{{ u.usuario_id }}</strong></td>
-                            <td>
-                                <span class="rol-badge {% if u.rol == 'ADMIN' %}rol-admin{% else %}rol-normal{% endif %}">
-                                    {{ u.rol }}
-                                </span>
-                            </td>
+                            <td>{{ u.id }}</td><td><strong>{{ u.usuario_id }}</strong></td>
+                            <td><span class="rol-badge {% if u.rol == 'ADMIN' %}rol-admin{% else %}rol-normal{% endif %}">{{ u.rol }}</span></td>
                             <td>{{ u.fecha_creacion }}</td>
-                            <td>
-                                <a href="{{ url_for('eliminar_usuario', id=u.id) }}" 
-                                   onclick="return confirm('¿Eliminar este usuario?')" 
-                                   class="btn-eliminar-usuario">🗑 Eliminar</a>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr class="empty-row">
-                            <td colspan="5">No hay usuarios registrados</td>
+                            <td><a href="{{ url_for('eliminar_usuario', id=u.id) }}" onclick="return confirm('¿Eliminar este usuario?')" class="btn-eliminar-usuario">🗑 Eliminar</a></td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -239,31 +66,10 @@
             </div>
         </div>
     </div>
-    
     <script>
-        function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            localStorage.setItem('darkMode', isDark);
-            const btn = document.getElementById('themeToggle');
-            if (btn) {
-                btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
-            }
-        }
-        
-        const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-        if (savedDarkMode) {
-            document.body.classList.add('dark-mode');
-            const btn = document.getElementById('themeToggle');
-            if (btn) {
-                btn.textContent = '☀️ Light';
-            }
-        }
-        
-        const toggleBtn = document.getElementById('themeToggle');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', toggleTheme);
-        }
+        function toggleTheme() { document.body.classList.toggle('dark-mode'); const isDark = document.body.classList.contains('dark-mode'); localStorage.setItem('darkMode', isDark); const btn = document.getElementById('themeToggle'); if (btn) btn.textContent = isDark ? '☀️ Light' : '🌙 Dark'; }
+        const savedDarkMode = localStorage.getItem('darkMode') === 'true'; if (savedDarkMode) { document.body.classList.add('dark-mode'); const btn = document.getElementById('themeToggle'); if (btn) btn.textContent = '☀️ Light'; }
+        const toggleBtn = document.getElementById('themeToggle'); if (toggleBtn) toggleBtn.addEventListener('click', toggleTheme);
     </script>
 </body>
 </html>

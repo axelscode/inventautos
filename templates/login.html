@@ -6,7 +6,6 @@
     <title>INVENTAUTOS - Login</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        /* Estilos específicos para el login */
         .login-wrapper {
             display: flex;
             justify-content: center;
@@ -37,11 +36,6 @@
             margin-bottom: 10px;
         }
         
-        .login-header p {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        
         .theme-toggle-login {
             display: flex;
             justify-content: flex-end;
@@ -56,9 +50,6 @@
             border-radius: 25px;
             cursor: pointer;
             font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
         
         .input-group {
@@ -81,13 +72,39 @@
             font-size: 14px;
             background: var(--bg-card);
             color: var(--text-primary);
-            transition: all 0.3s ease;
         }
         
-        .input-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        .captcha-texto {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 8px;
+            text-align: center;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            font-family: monospace;
+        }
+        
+        .captcha-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .captcha-code {
+            flex: 1;
+        }
+        
+        .btn-refrescar {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
         }
         
         .button-group {
@@ -118,11 +135,6 @@
             cursor: pointer;
             font-size: 16px;
             font-weight: 600;
-        }
-        
-        .btn-entrar:hover, .btn-cancelar:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
         }
         
         .alert {
@@ -176,7 +188,7 @@
             <form method="POST">
                 <div class="input-group">
                     <label>👤 Usuario ID</label>
-                    <input type="text" name="usuario_id" required autofocus placeholder="Ej: admin">
+                    <input type="text" name="usuario_id" required autofocus placeholder="admin">
                 </div>
                 
                 <div class="input-group">
@@ -185,8 +197,14 @@
                 </div>
                 
                 <div class="input-group">
-                    <label>🔐 Código de seguridad</label>
-                    <input type="text" name="codigo" required placeholder="Ingresa el código">
+                    <label>🔐 Código de Verificación</label>
+                    <div class="captcha-container">
+                        <div class="captcha-code">
+                            <div class="captcha-texto">{{ captcha_texto }}</div>
+                        </div>
+                        <button type="button" class="btn-refrescar" onclick="refrescarCaptcha()">🔄</button>
+                    </div>
+                    <input type="text" name="captcha" placeholder="Ingresa el código de arriba" required autocomplete="off" style="margin-top: 10px;">
                 </div>
                 
                 <div class="button-group">
@@ -206,6 +224,14 @@
             if (btn) {
                 btn.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
             }
+        }
+        
+        function refrescarCaptcha() {
+            fetch("{{ url_for('captcha') }}")
+                .then(response => response.text())
+                .then(data => {
+                    document.querySelector('.captcha-texto').textContent = data;
+                });
         }
         
         const savedDarkMode = localStorage.getItem('darkMode') === 'true';

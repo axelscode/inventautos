@@ -1,4 +1,9 @@
-/* ========== VARIABLES GLOBALES ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 :root {
     --bg-body: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --bg-card: #ffffff;
@@ -27,7 +32,6 @@ body {
     transition: all 0.3s ease;
 }
 
-/* Header */
 .header {
     background: var(--bg-card);
     padding: 12px 20px;
@@ -62,6 +66,15 @@ body {
     font-size: 12px;
 }
 
+.btn-home {
+    background: #17a2b8;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 12px;
+}
+
 .theme-btn {
     background: #667eea;
     color: white;
@@ -72,7 +85,6 @@ body {
     font-size: 12px;
 }
 
-/* Toolbar */
 .toolbar {
     background: var(--bg-card);
     padding: 10px 20px;
@@ -93,7 +105,6 @@ body {
 .btn-agregar { background: #28a745; color: white; }
 .btn-usuarios { background: #17a2b8; color: white; }
 
-/* Filtros */
 .filtros-card {
     background: var(--bg-card);
     border-radius: 16px;
@@ -135,7 +146,6 @@ body {
     border-radius: 8px;
 }
 
-/* Tabla */
 .table-container {
     background: var(--bg-card);
     border-radius: 12px;
@@ -184,79 +194,11 @@ body.dark-mode .status-disponible {
 .btn-editar { background: #ffc107; color: #333; }
 .btn-eliminar { background: #dc3545; color: white; }
 
-.btn-home {
-    background: #17a2b8;
-    color: white;
-    padding: 5px 12px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-size: 12px;
-    transition: all 0.3s ease;
-}
-
-.btn-home:hover {
-    background: #138496;
-    transform: translateY(-1px);
-}
-
-
-/* Alertas */
 .alert {
     padding: 10px;
     margin-bottom: 12px;
     border-radius: 8px;
     font-size: 12px;
-}
-
-/* Vista en celular */
-@media (max-width: 768px) {
-    .header {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .header > div {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    
-    .toolbar {
-        text-align: center;
-    }
-    
-    .toolbar a {
-        display: inline-block;
-        margin: 5px;
-    }
-    
-    .filtros form {
-        flex-direction: column;
-    }
-    
-    .filtros input,
-    .filtros select,
-    .btn-buscar,
-    .btn-limpiar {
-        width: 100%;
-    }
-    
-    table {
-        font-size: 10px;
-    }
-    
-    th, td {
-        padding: 4px 2px;
-    }
-    
-    .btn-editar, .btn-eliminar {
-        padding: 2px 6px;
-        font-size: 9px;
-    }
-    
-    .stats-cards {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
 }
 
 .alert-success { background: #d4edda; color: #155724; }
@@ -265,10 +207,13 @@ body.dark-mode .status-disponible {
 body.dark-mode .alert-success { background: #1e3a2e; color: #90ee90; }
 body.dark-mode .alert-error { background: #3a1e24; color: #ff9999; }
 
-.user-badge {
-    background: var(--border-color);
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    color: var(--text-primary);
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        text-align: center;
+    }
+    .filtros-card input, .filtros-card select, .btn-buscar, .btn-limpiar {
+        width: 100%;
+        margin-bottom: 5px;
+    }
 }
