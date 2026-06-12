@@ -13,7 +13,8 @@ from datetime import datetime, timedelta
 import json
 import zipfile
 import shutil
-import time
+import base64
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 app = Flask(__name__)
 app.secret_key = 'inventautos_secret_key_2024'
@@ -37,18 +38,60 @@ def allowed_file(filename):
 def allowed_image(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
 
-def generar_captcha():
-    texto = ''.join(str(random.randint(0, 9)) for _ in range(5))
-    session['captcha_texto'] = texto
-    return texto
-
 def generar_codigo_acceso(longitud=6):
     return ''.join(str(random.randint(0, 9)) for _ in range(longitud))
 
 def generar_token_sesion():
     return secrets.token_urlsafe(32)
 
-# ============ FUNCIÓN REGISTRAR LOG CORREGIDA ============
+# ============ CAPTCHA MEJORADO ============
+def generar_captcha(longitud=6):
+    """Genera un CAPTCHA más complejo con letras y números"""
+    caracteres = string.ascii_uppercase + string.digits
+    caracteres = caracteres.replace('0', '').replace('O', '').replace('1', '').replace('I', '')
+    texto = ''.join(random.choice(caracteres) for _ in range(longitud))
+    session['captcha_texto'] = texto
+    session['captcha_timestamp'] = datetime.now().timestamp()
+    return texto
+
+def generar_imagen_captcha(texto):
+    """Genera una imagen CAPTCHA con distorsión"""
+    ancho = 280
+    alto = 90
+    imagen = Image.new('RGB', (ancho, alto), color=(255, 255, 255))
+    draw = ImageDraw.Draw(imagen)
+    
+    for i in range(ancho):
+        color = (240 - int(i/3), 245 - int(i/4), 250)
+        draw.line([(i, 0), (i, alto)], fill=color)
+    
+    for _ in range(8):
+        x1 = random.randint(0, ancho)
+        y1 = random.randint(0, alto)
+        x2 = random.randint(0, ancho)
+        y2 = random.randint(0, alto)
+        draw.line([(x1, y1), (x2, y2)], fill=(100, 100, 150), width=2)
+    
+    for _ in range(300):
+        x = random.randint(0, ancho)
+        y = random.randint(0, alto)
+        draw.point((x, y), fill=(80, 80, 120))
+    
+    try:
+        font = ImageFont.truetype("arial.ttf", 38)
+    except:
+        font = ImageFont.load_default()
+    
+    x_offset = 25
+    for i, char in enumerate(texto):
+        color = (random.randint(40, 120), random.randint(40, 120), random.randint(100, 200))
+        y = 25 + random.randint(-5, 5)
+        draw.text((x_offset + i * 38, y), char, fill=color, font=font)
+    
+    imagen = imagen.filter(ImageFilter.SMOOTH)
+    return imagen
+
+# ============ FUNCIONES DE LOG Y BACKUP ============
 def registrar_log(usuario_id, accion, tabla=None, registro_id=None, detalles=None, ip=None):
     try:
         conn = sqlite3.connect(DATABASE, timeout=10)
@@ -68,7 +111,6 @@ def registrar_log(usuario_id, accion, tabla=None, registro_id=None, detalles=Non
     except Exception as e:
         print(f"Error al registrar log: {e}")
 
-# ============ FUNCIONES DE BACKUP ============
 def crear_backup():
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     backup_name = f'backup_{timestamp}'
@@ -195,6 +237,7 @@ def init_db():
 
 init_db()
 
+# ============ DECORADORES ============
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -232,11 +275,34 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-@app.route('/captcha')
-def captcha():
-    texto = generar_captcha()
-    return texto
+# ============ RUTAS CAPTCHA ============
+@app.route('/captcha_imagen')
+def captcha_imagen():
+    texto = generar_captcha(6)
+    imagen = generar_imagen_captcha(texto)
+    buffer = BytesIO()
+    imagen.save(buffer, format='PNG')
+    buffer.seek(0)
+    return send_file(buffer, mimetype='image/png')
 
+@app.route('/captcha_audio')
+def captcha_audio():
+    texto = session.get('captcha_texto', '')
+    if not texto:
+        texto = generar_captcha(6)
+    try:
+        from gtts import gTTS
+        import tempfile
+        audio_text = ' '.join(texto)
+        tts = gTTS(text=audio_text, lang='es', slow=True)
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
+        tts.save(temp_file.name)
+        temp_file.seek(0)
+        return send_file(temp_file.name, mimetype='audio/mpeg')
+    except:
+        return '', 404
+
+# ============ RUTAS PRINCIPALES ============
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -245,11 +311,11 @@ def login():
     if request.method == 'POST':
         usuario_id = request.form.get('usuario_id', '').strip()
         contrasena = request.form.get('contrasena', '').strip()
-        captcha_usuario = request.form.get('captcha', '').strip()
-        captcha_guardado = session.get('captcha_texto', '')
+        captcha_usuario = request.form.get('captcha', '').strip().upper()
+        captcha_guardado = session.get('captcha_texto', '').upper()
         if captcha_usuario != captcha_guardado:
             flash('Código de verificación incorrecto', 'error')
-            return render_template('login.html', captcha_texto=session.get('captcha_texto', ''))
+            return render_template('login.html')
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM usuarios WHERE usuario_id = ?", (usuario_id,))
@@ -279,8 +345,8 @@ def login():
                 registrar_log(user['id'], 'LOGIN_FALLIDO', 'usuarios', user['id'], 'Contraseña incorrecta', request.remote_addr)
             conn.close()
             flash('Usuario o contraseña incorrectos', 'error')
-    generar_captcha()
-    return render_template('login.html', captcha_texto=session.get('captcha_texto', ''))
+    generar_captcha(6)
+    return render_template('login.html')
 
 @app.route('/logout')
 def logout():
@@ -358,6 +424,7 @@ def estadisticas():
     conn.close()
     return jsonify({'total': total, 'disponibles': disponibles, 'vendidos': vendidos, 'reservados': reservados})
 
+# ============ RUTAS DE FOTOS ============
 @app.route('/subir_foto/<int:id>', methods=['POST'])
 @login_required
 @admin_required
@@ -416,6 +483,7 @@ def eliminar_foto(id):
     conn.close()
     return redirect(url_for('editar_vehiculo', id=id))
 
+# ============ RUTAS DE BACKUP ============
 @app.route('/backup')
 @login_required
 @admin_required
@@ -466,6 +534,7 @@ def eliminar_backup(nombre):
         flash('Backup eliminado', 'success')
     return redirect(url_for('lista_backups'))
 
+# ============ RUTAS DE LOGS Y SESIONES ============
 @app.route('/sesiones_activas')
 @login_required
 @admin_required
@@ -514,6 +583,7 @@ def logs_actividad():
     registrar_log(session['user_id'], 'VER_LOGS', 'logs', None, 'Visualizó logs', request.remote_addr)
     return render_template('logs_actividad.html', logs=logs, acciones=acciones)
 
+# ============ RUTAS DE VEHÍCULOS ============
 @app.route('/agregar_vehiculo', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -593,6 +663,7 @@ def eliminar_vehiculo(id):
     flash('Vehículo eliminado', 'success')
     return redirect(url_for('inventario'))
 
+# ============ RUTAS DE USUARIOS ============
 @app.route('/usuarios')
 @login_required
 @admin_required
@@ -705,6 +776,7 @@ def cambiar_mi_contraseña():
         return redirect(url_for('inventario'))
     return render_template('cambiar_contraseña.html')
 
+# ============ OTRAS RUTAS ============
 @app.route('/dashboard')
 @login_required
 def dashboard():

@@ -21,7 +21,7 @@
             position: relative;
         }
 
-        /* Partículas de fondo animadas */
+        /* Partículas animadas */
         .bg-animation {
             position: fixed;
             top: 0;
@@ -42,23 +42,12 @@
         }
 
         @keyframes float {
-            0% {
-                transform: translateY(100vh) scale(0);
-                opacity: 0;
-            }
-            10% {
-                opacity: 0.5;
-            }
-            90% {
-                opacity: 0.5;
-            }
-            100% {
-                transform: translateY(-20vh) scale(1);
-                opacity: 0;
-            }
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { transform: translateY(-20vh) scale(1); opacity: 0; }
         }
 
-        /* Contenedor principal */
         .login-wrapper {
             position: relative;
             z-index: 1;
@@ -69,26 +58,23 @@
             padding: 20px;
         }
 
-        /* Tarjeta Glassmorphism */
         .login-card {
             background: rgba(255, 255, 255, 0.07);
             backdrop-filter: blur(12px);
             border-radius: 32px;
             padding: 48px 40px;
             width: 100%;
-            max-width: 460px;
+            max-width: 480px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
             transition: all 0.4s ease;
         }
 
         .login-card:hover {
             transform: translateY(-5px);
             border-color: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 35px 55px rgba(0, 0, 0, 0.4);
         }
 
-        /* Header */
         .login-header {
             text-align: center;
             margin-bottom: 40px;
@@ -115,16 +101,13 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 8px;
-            letter-spacing: -0.5px;
         }
 
         .login-header p {
             color: rgba(255, 255, 255, 0.6);
             font-size: 14px;
-            font-weight: 400;
         }
 
-        /* Theme toggle */
         .theme-toggle-login {
             position: absolute;
             top: 24px;
@@ -142,15 +125,8 @@
             font-size: 13px;
             font-weight: 500;
             transition: all 0.3s ease;
-            font-family: 'Inter', sans-serif;
         }
 
-        .theme-btn-login:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.02);
-        }
-
-        /* Input groups */
         .input-group {
             margin-bottom: 24px;
         }
@@ -161,12 +137,10 @@
             color: rgba(255, 255, 255, 0.8);
             font-weight: 500;
             font-size: 13px;
-            letter-spacing: 0.3px;
         }
 
         .input-group label i {
             margin-right: 8px;
-            font-size: 14px;
         }
 
         .input-wrapper {
@@ -191,11 +165,6 @@
             outline: none;
             border-color: #667eea;
             background: rgba(255, 255, 255, 0.12);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-        }
-
-        .input-wrapper input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
         }
 
         .toggle-password {
@@ -206,14 +175,9 @@
             color: rgba(255, 255, 255, 0.5);
             cursor: pointer;
             font-size: 18px;
-            transition: color 0.3s;
         }
 
-        .toggle-password:hover {
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        /* CAPTCHA section - Moderno */
+        /* CAPTCHA MODERNO */
         .captcha-section {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 24px;
@@ -232,10 +196,6 @@
             gap: 8px;
         }
 
-        .captcha-label i {
-            font-size: 14px;
-        }
-
         .captcha-box {
             display: flex;
             gap: 12px;
@@ -243,62 +203,40 @@
             margin-bottom: 16px;
         }
 
-        .captcha-code-card {
+        .captcha-imagen {
             flex: 1;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 20px;
-            padding: 16px;
+            padding: 8px;
             text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            overflow: hidden;
         }
 
-        .captcha-code-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
+        .captcha-imagen img {
             width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            animation: shine 8s infinite;
+            height: auto;
+            border-radius: 12px;
         }
 
-        @keyframes shine {
-            0% { left: -100%; }
-            20% { left: 100%; }
-            100% { left: 100%; }
+        .captcha-buttons {
+            display: flex;
+            gap: 8px;
         }
 
-        .captcha-texto {
-            font-size: 36px;
-            font-weight: 800;
-            letter-spacing: 12px;
-            font-family: 'Courier New', 'Fira Code', monospace;
-            background: linear-gradient(135deg, #fff 0%, #a8b2ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .btn-refrescar {
+        .btn-captcha {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.15);
             color: white;
-            padding: 14px 20px;
+            padding: 12px 14px;
             border-radius: 20px;
             cursor: pointer;
-            font-size: 20px;
+            font-size: 16px;
             transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        .btn-refrescar:hover {
+        .btn-captcha:hover {
             background: rgba(255, 255, 255, 0.2);
-            transform: rotate(15deg) scale(1.05);
+            transform: scale(1.02);
         }
 
         .captcha-input input {
@@ -318,15 +256,8 @@
         .captcha-input input:focus {
             outline: none;
             border-color: #667eea;
-            background: rgba(255, 255, 255, 0.12);
         }
 
-        .captcha-input input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-            letter-spacing: normal;
-        }
-
-        /* Botones */
         .button-group {
             display: flex;
             gap: 16px;
@@ -343,25 +274,7 @@
             cursor: pointer;
             font-size: 15px;
             font-weight: 600;
-            font-family: 'Inter', sans-serif;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-entrar::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn-entrar:hover::before {
-            left: 100%;
         }
 
         .btn-entrar:hover {
@@ -379,7 +292,6 @@
             cursor: pointer;
             font-size: 15px;
             font-weight: 500;
-            font-family: 'Inter', sans-serif;
             transition: all 0.3s ease;
         }
 
@@ -388,14 +300,12 @@
             transform: translateY(-2px);
         }
 
-        /* Alertas */
         .alert {
             padding: 14px 18px;
             margin-bottom: 24px;
             border-radius: 20px;
             font-size: 13px;
             font-weight: 500;
-            backdrop-filter: blur(8px);
         }
 
         .alert-success {
@@ -410,7 +320,7 @@
             border: 1px solid rgba(220, 53, 69, 0.3);
         }
 
-        /* Modo claro (light mode) */
+        /* Modo Claro */
         body.light-mode {
             background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
         }
@@ -418,18 +328,12 @@
         body.light-mode .login-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: none;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
         }
 
         body.light-mode .login-header h1 {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-        }
-
-        body.light-mode .login-header p {
-            color: #666;
         }
 
         body.light-mode .input-group label {
@@ -442,81 +346,25 @@
             color: #333;
         }
 
-        body.light-mode .input-wrapper input::placeholder {
-            color: #aaa;
-        }
-
         body.light-mode .captcha-section {
             background: #f0f2f5;
-            border-color: #e0e0e0;
         }
 
-        body.light-mode .captcha-code-card {
-            background: #fff;
-        }
-
-        body.light-mode .captcha-texto {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        body.light-mode .btn-refrescar {
+        body.light-mode .btn-captcha {
             background: #e0e0e0;
             color: #666;
-            border-color: #ccc;
         }
 
-        body.light-mode .captcha-input input {
-            background: #f8f9fa;
-            border-color: #e0e0e0;
-            color: #333;
-        }
-
-        body.light-mode .btn-cancelar {
-            background: #f0f0f0;
-            color: #666;
-            border-color: #ddd;
-        }
-
-        body.light-mode .btn-cancelar:hover {
-            background: #e0e0e0;
-        }
-
-        body.light-mode .theme-btn-login {
-            background: rgba(0, 0, 0, 0.05);
-            color: #667eea;
-            border-color: rgba(0, 0, 0, 0.1);
-        }
-
-        body.light-mode .alert-success {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        body.light-mode .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        /* Responsive */
         @media (max-width: 480px) {
             .login-card {
                 padding: 32px 24px;
             }
-            .login-header h1 {
-                font-size: 28px;
-            }
-            .captcha-texto {
-                font-size: 24px;
-                letter-spacing: 6px;
-            }
             .captcha-box {
                 flex-direction: column;
             }
-            .btn-refrescar {
+            .captcha-buttons {
                 width: 100%;
-                padding: 12px;
+                justify-content: center;
             }
             .button-group {
                 flex-direction: column;
@@ -525,7 +373,6 @@
     </style>
 </head>
 <body>
-    <!-- Partículas animadas -->
     <div class="bg-animation" id="particles"></div>
 
     <div class="theme-toggle-login">
@@ -537,9 +384,7 @@
     <div class="login-wrapper">
         <div class="login-card">
             <div class="login-header">
-                <div class="logo-icon">
-                    🚗
-                </div>
+                <div class="logo-icon">🚗</div>
                 <h1>INVENTAUTOS</h1>
                 <p>Bienvenido de vuelta</p>
             </div>
@@ -554,7 +399,7 @@
                 {% endif %}
             {% endwith %}
 
-            <form method="POST">
+            <form method="POST" id="loginForm">
                 <div class="input-group">
                     <label><i class="fas fa-user"></i> Usuario ID</label>
                     <div class="input-wrapper">
@@ -572,21 +417,26 @@
                     </div>
                 </div>
 
-                <!-- CAPTCHA Moderno -->
+                <!-- CAPTCHA MODERNO CON IMAGEN -->
                 <div class="captcha-section">
                     <div class="captcha-label">
                         <i class="fas fa-shield-alt"></i> Código de Verificación
                     </div>
                     <div class="captcha-box">
-                        <div class="captcha-code-card">
-                            <div class="captcha-texto" id="captchaTexto">{{ captcha_texto }}</div>
+                        <div class="captcha-imagen">
+                            <img id="captchaImg" src="{{ url_for('captcha_imagen') }}" alt="CAPTCHA">
                         </div>
-                        <button type="button" class="btn-refrescar" onclick="refrescarCaptcha()">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
+                        <div class="captcha-buttons">
+                            <button type="button" class="btn-captcha" onclick="refrescarCaptcha()" title="Actualizar CAPTCHA">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button type="button" class="btn-captcha" onclick="reproducirAudio()" title="Escuchar código">
+                                <i class="fas fa-volume-up"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="captcha-input">
-                        <input type="text" name="captcha" id="captcha" placeholder="Ingresa el código" required autocomplete="off">
+                        <input type="text" name="captcha" id="captcha" placeholder="Ingresa el código de la imagen" required autocomplete="off">
                     </div>
                 </div>
 
@@ -603,31 +453,21 @@
     </div>
 
     <script>
-        // Partículas animadas
+        // Partículas
         function createParticles() {
             const container = document.getElementById('particles');
-            const particleCount = 80;
-            
-            for (let i = 0; i < particleCount; i++) {
+            for (let i = 0; i < 80; i++) {
                 const particle = document.createElement('span');
-                const size = Math.random() * 6 + 2;
-                const duration = Math.random() * 20 + 10;
-                const delay = Math.random() * 10;
-                const left = Math.random() * 100;
-                
-                particle.style.width = size + 'px';
-                particle.style.height = size + 'px';
-                particle.style.left = left + '%';
-                particle.style.animationDuration = duration + 's';
-                particle.style.animationDelay = delay + 's';
-                
+                particle.style.width = (Math.random() * 6 + 2) + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDuration = (Math.random() * 20 + 10) + 's';
+                particle.style.animationDelay = Math.random() * 10 + 's';
                 container.appendChild(particle);
             }
         }
-        
         createParticles();
 
-        // Toggle password visibility
         function togglePassword(id) {
             const input = document.getElementById(id);
             const icon = input.nextElementSibling.querySelector('i');
@@ -642,46 +482,36 @@
             }
         }
 
-        // Theme toggle
+        function refrescarCaptcha() {
+            const img = document.getElementById('captchaImg');
+            img.src = "{{ url_for('captcha_imagen') }}?" + new Date().getTime();
+            document.getElementById('captcha').value = '';
+        }
+
+        function reproducirAudio() {
+            const audio = new Audio("{{ url_for('captcha_audio') }}?" + new Date().getTime());
+            audio.play().catch(e => console.log('Error al reproducir audio:', e));
+        }
+
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
             const isLight = document.body.classList.contains('light-mode');
             localStorage.setItem('lightMode', isLight);
             const btn = document.getElementById('themeToggle');
             if (btn) {
-                if (isLight) {
-                    btn.innerHTML = '<i class="fas fa-moon"></i> Modo Oscuro';
-                } else {
-                    btn.innerHTML = '<i class="fas fa-sun"></i> Modo Claro';
-                }
+                btn.innerHTML = isLight ? '<i class="fas fa-moon"></i> Modo Oscuro' : '<i class="fas fa-sun"></i> Modo Claro';
             }
         }
 
-        // Refresh captcha
-        function refrescarCaptcha() {
-            fetch("{{ url_for('captcha') }}")
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('captchaTexto').textContent = data;
-                    document.getElementById('captcha').value = '';
-                })
-                .catch(error => console.error('Error:', error));
-        }
-
-        // Load saved theme
         const savedLightMode = localStorage.getItem('lightMode') === 'true';
         if (savedLightMode) {
             document.body.classList.add('light-mode');
             const btn = document.getElementById('themeToggle');
-            if (btn) {
-                btn.innerHTML = '<i class="fas fa-moon"></i> Modo Oscuro';
-            }
+            if (btn) btn.innerHTML = '<i class="fas fa-moon"></i> Modo Oscuro';
         }
 
         const toggleBtn = document.getElementById('themeToggle');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', toggleTheme);
-        }
+        if (toggleBtn) toggleBtn.addEventListener('click', toggleTheme);
     </script>
 </body>
 </html>
