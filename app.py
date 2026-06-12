@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify
 from functools import wraps
 import sqlite3
 import os
@@ -134,7 +134,6 @@ def captcha():
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # Inicializar código de acceso si no existe
     if 'codigo_acceso' not in session:
         session['codigo_acceso'] = generar_codigo_acceso(6)
     
@@ -172,7 +171,6 @@ def login():
 @login_required
 @admin_required
 def ver_codigo():
-    """Muestra el código de acceso actual"""
     codigo = session.get('codigo_acceso', generar_codigo_acceso(6))
     return render_template('ver_codigo.html', codigo=codigo)
 
@@ -180,7 +178,6 @@ def ver_codigo():
 @login_required
 @admin_required
 def regenerar_codigo():
-    """Regenera un nuevo código de acceso"""
     nuevo_codigo = generar_codigo_acceso(6)
     session['codigo_acceso'] = nuevo_codigo
     flash(f'Nuevo código de acceso generado: {nuevo_codigo}', 'success')
@@ -220,6 +217,54 @@ def inventario():
     vehiculos = cursor.fetchall()
     conn.close()
     return render_template('inventario.html', vehiculos=vehiculos, rol=session.get('rol'))
+
+@app.route('/cambiar_estatus_ajax/<int:id>')
+@login_required
+@admin_required
+def cambiar_estatus_ajax(id):
+    """Cambia el estatus del vehículo vía AJAX"""
+    nuevo_estatus = request.args.get('nuevo_estatus', '')
+    
+    if nuevo_estatus not in ['DISPONIBLE', 'VENDIDO', 'RESERVADO']:
+        return jsonify({'success': False, 'error': 'Estado no válido'})
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    cursor.execute("UPDATE vehiculos SET estatus = ? WHERE id = ?", (nuevo_estatus, id))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'nuevo_estatus': nuevo_estatus})
+
+@app.route('/estadisticas')
+@login_required
+@admin_required
+def estadisticas():
+    """Devuelve las estadísticas en JSON para actualizar las tarjetas"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT COUNT(*) as total FROM vehiculos")
+    total = cursor.fetchone()['total']
+    
+    cursor.execute("SELECT COUNT(*) as total FROM vehiculos WHERE estatus = 'DISPONIBLE'")
+    disponibles = cursor.fetchone()['total']
+    
+    cursor.execute("SELECT COUNT(*) as total FROM vehiculos WHERE estatus = 'VENDIDO'")
+    vendidos = cursor.fetchone()['total']
+    
+    cursor.execute("SELECT COUNT(*) as total FROM vehiculos WHERE estatus = 'RESERVADO'")
+    reservados = cursor.fetchone()['total']
+    
+    conn.close()
+    
+    return jsonify({
+        'total': total,
+        'disponibles': disponibles,
+        'vendidos': vendidos,
+        'reservados': reservados
+    })
 
 @app.route('/dashboard')
 @login_required

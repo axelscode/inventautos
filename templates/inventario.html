@@ -30,6 +30,76 @@
         .btn-excel { background: #28a745; color: white; padding: 6px 15px; border-radius: 8px; text-decoration: none; font-size: 12px; margin-left: 10px; }
         .btn-importar { background: #ffc107; color: #333; padding: 6px 15px; border-radius: 8px; text-decoration: none; font-size: 12px; margin-left: 10px; }
         .btn-codigo { background: #17a2b8; color: white; padding: 6px 15px; border-radius: 8px; text-decoration: none; font-size: 12px; margin-left: 10px; }
+        
+        .status-disponible { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .status-vendido { background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .status-reservado { background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
+        
+        body.dark-mode .status-disponible { background: #1e3a2e; color: #90ee90; }
+        body.dark-mode .status-vendido { background: #3a1e24; color: #ff9999; }
+        body.dark-mode .status-reservado { background: #3a3a1e; color: #ffd966; }
+        
+        .select-estatus {
+            padding: 5px 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .select-estatus:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .select-estatus.estatus-disponible {
+            background: #d4edda;
+            color: #155724;
+            border-color: #28a745;
+        }
+        
+        .select-estatus.estatus-vendido {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #dc3545;
+        }
+        
+        .select-estatus.estatus-reservado {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #ffc107;
+        }
+        
+        body.dark-mode .select-estatus.estatus-disponible {
+            background: #1e3a2e;
+            color: #90ee90;
+            border-color: #28a745;
+        }
+        
+        body.dark-mode .select-estatus.estatus-vendido {
+            background: #3a1e24;
+            color: #ff9999;
+            border-color: #dc3545;
+        }
+        
+        body.dark-mode .select-estatus.estatus-reservado {
+            background: #3a3a1e;
+            color: #ffd966;
+            border-color: #ffc107;
+        }
+        
+        .acciones-cell {
+            white-space: nowrap;
+            min-width: 180px;
+        }
+        .estatus-cell {
+            text-align: center;
+            min-width: 110px;
+        }
     </style>
 </head>
 <body>
@@ -46,6 +116,8 @@
     <div class="stats-cards">
         <div class="stat-card"><div class="number">{{ vehiculos|length }}</div><div class="label">Total Vehículos</div></div>
         <div class="stat-card"><div class="number">{{ vehiculos|selectattr('estatus', 'equalto', 'DISPONIBLE')|list|length }}</div><div class="label">Disponibles</div></div>
+        <div class="stat-card"><div class="number">{{ vehiculos|selectattr('estatus', 'equalto', 'VENDIDO')|list|length }}</div><div class="label">Vendidos</div></div>
+        <div class="stat-card"><div class="number">{{ vehiculos|selectattr('estatus', 'equalto', 'RESERVADO')|list|length }}</div><div class="label">Reservados</div></div>
     </div>
     
     <div class="toolbar">
@@ -66,14 +138,17 @@
                 <input type="text" name="buscar" placeholder="Buscar por chassis, marca, modelo..." value="{{ request.args.get('buscar', '') }}" style="flex: 2;">
                 <select name="marca">
                     <option value="">Todas las marcas</option>
-                    <option value="TOYOTA" {% if request.args.get('marca') == 'TOYOTA' %}selected{% endif %}>TOYOTA</option>
-                    <option value="NISSAN" {% if request.args.get('marca') == 'NISSAN' %}selected{% endif %}>NISSAN</option>
-                    <option value="SUZUKI" {% if request.args.get('marca') == 'SUZUKI' %}selected{% endif %}>SUZUKI</option>
+                    {% for v in vehiculos %}
+                        {% if loop.first or v.marca != vehiculos[loop.index0-1].marca %}
+                            <option value="{{ v.marca }}" {% if request.args.get('marca') == v.marca %}selected{% endif %}>{{ v.marca }}</option>
+                        {% endif %}
+                    {% endfor %}
                 </select>
                 <select name="estatus">
                     <option value="">Todos</option>
                     <option value="DISPONIBLE" {% if request.args.get('estatus') == 'DISPONIBLE' %}selected{% endif %}>Disponible</option>
                     <option value="VENDIDO" {% if request.args.get('estatus') == 'VENDIDO' %}selected{% endif %}>Vendido</option>
+                    <option value="RESERVADO" {% if request.args.get('estatus') == 'RESERVADO' %}selected{% endif %}>Reservado</option>
                 </select>
                 <button type="submit" class="btn-buscar">🔍 Buscar</button>
                 {% if request.args.get('buscar') or request.args.get('marca') or request.args.get('estatus') %}
@@ -93,31 +168,55 @@
     
     <div class="table-container">
         <div class="table-wrapper">
-            <table>
+            <table id="tabla-vehiculos">
                 <thead>
                     <tr>
-                        <th>Chassis</th><th>Status</th><th>Marca</th><th>Modelo</th><th>Tipo</th><th>Año</th>
-                        <th>Color</th><th>Precio</th><th>Precio C</th><th>Precio F</th>
-                        <th>Locación</th><th>País</th><th>BL</th>
-                        {% if rol == 'ADMIN' %}<th>Acciones</th>{% endif %}
+                        <th>Chassis</th>
+                        <th>Marca</th>
+                        <th>Modelo</th>
+                        <th>Tipo</th>
+                        <th>Año</th>
+                        <th>Color</th>
+                        <th>Precio</th>
+                        <th>Precio C</th>
+                        <th>Precio F</th>
+                        <th>Locación</th>
+                        <th>País</th>
+                        <th>BL</th>
+                        {% if rol == 'ADMIN' %}
+                            <th>Estatus</th>
+                            <th>Acciones</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
                     {% for v in vehiculos %}
-                    <tr>
+                    <tr id="fila-{{ v.id }}">
                         <td>{{ v.chassis }}</td>
-                        <td><span class="status-disponible">{{ v.estatus }}</span></td>
-                        <td>{{ v.marca }}</td><td>{{ v.modelo }}</td><td>{{ v.tipo }}</td>
-                        <td>{{ v.ano }}</td><td>{{ v.color }}</td>
+                        <td>{{ v.marca }}</td>
+                        <td>{{ v.modelo }}</td>
+                        <td>{{ v.tipo }}</td>
+                        <td>{{ v.ano }}</td>
+                        <td>{{ v.color }}</td>
                         <td>${{ '{:,.0f}'.format(v.precio) }}</td>
                         <td>${{ '{:,.0f}'.format(v.precio_contado) }}</td>
                         <td>${{ '{:,.0f}'.format(v.precio_financiamiento) }}</td>
                         <td>{{ v.locacion[:20] }}{% if v.locacion and v.locacion|length > 20 %}...{% endif %}</td>
-                        <td>{{ v.pais }}</td><td>{{ v.bl[:12] }}{% if v.bl and v.bl|length > 12 %}...{% endif %}</td>
+                        <td>{{ v.pais }}</td>
+                        <td>{{ v.bl[:12] }}{% if v.bl and v.bl|length > 12 %}...{% endif %}</td>
                         {% if rol == 'ADMIN' %}
-                        <td>
-                            <a href="{{ url_for('editar_vehiculo', id=v.id) }}" class="btn-editar">Editar</a>
-                            <a href="{{ url_for('eliminar_vehiculo', id=v.id) }}" class="btn-eliminar" onclick="return confirm('¿Eliminar?')">Eliminar</a>
+                        <td class="estatus-cell">
+                            <select class="select-estatus estatus-{{ v.estatus|lower }}" 
+                                    data-id="{{ v.id }}"
+                                    data-estatus-actual="{{ v.estatus }}">
+                                <option value="DISPONIBLE" {% if v.estatus == 'DISPONIBLE' %}selected{% endif %}>✅ DISPONIBLE</option>
+                                <option value="VENDIDO" {% if v.estatus == 'VENDIDO' %}selected{% endif %}>💰 VENDIDO</option>
+                                <option value="RESERVADO" {% if v.estatus == 'RESERVADO' %}selected{% endif %}>📌 RESERVADO</option>
+                            </select>
+                        </td>
+                        <td class="acciones-cell">
+                            <a href="{{ url_for('editar_vehiculo', id=v.id) }}" class="btn-editar">✏️ Editar</a>
+                            <a href="{{ url_for('eliminar_vehiculo', id=v.id) }}" class="btn-eliminar" onclick="return confirm('¿Eliminar vehículo?')">🗑 Eliminar</a>
                         </td>
                         {% endif %}
                     </tr>
@@ -135,14 +234,87 @@
             const btn = document.getElementById('themeToggle');
             if (btn) btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
         }
+        
         const savedDarkMode = localStorage.getItem('darkMode') === 'true';
         if (savedDarkMode) {
             document.body.classList.add('dark-mode');
             const btn = document.getElementById('themeToggle');
             if (btn) btn.textContent = '☀️ Light';
         }
+        
         const toggleBtn = document.getElementById('themeToggle');
         if (toggleBtn) toggleBtn.addEventListener('click', toggleTheme);
+        
+        function actualizarColorSelect(select, estatus) {
+            select.classList.remove('estatus-disponible', 'estatus-vendido', 'estatus-reservado');
+            select.classList.add('estatus-' + estatus.toLowerCase());
+        }
+        
+        function actualizarEstadisticas() {
+            fetch('/estadisticas')
+                .then(response => response.json())
+                .then(data => {
+                    const statNumbers = document.querySelectorAll('.stat-card .number');
+                    if (statNumbers.length >= 4) {
+                        statNumbers[0].textContent = data.total;
+                        statNumbers[1].textContent = data.disponibles;
+                        statNumbers[2].textContent = data.vendidos;
+                        statNumbers[3].textContent = data.reservados;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        
+        function mostrarMensaje(mensaje, tipo) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${tipo}`;
+            alertDiv.textContent = mensaje;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.maxWidth = '300px';
+            document.body.appendChild(alertDiv);
+            setTimeout(() => alertDiv.remove(), 3000);
+        }
+        
+        document.querySelectorAll('.select-estatus').forEach(select => {
+            select.setAttribute('data-estatus-actual', select.value);
+            
+            select.addEventListener('change', function(e) {
+                const nuevoEstatus = this.value;
+                const idVehiculo = this.getAttribute('data-id');
+                const estadoAnterior = this.getAttribute('data-estatus-actual');
+                
+                if (confirm(`¿Cambiar estado de este vehículo?\n\nActual: ${estadoAnterior}\nNuevo: ${nuevoEstatus}`)) {
+                    this.style.opacity = '0.5';
+                    
+                    fetch(`/cambiar_estatus_ajax/${idVehiculo}?nuevo_estatus=${nuevoEstatus}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                actualizarColorSelect(this, nuevoEstatus);
+                                actualizarEstadisticas();
+                                mostrarMensaje('✅ Estado actualizado a ' + nuevoEstatus, 'success');
+                                this.setAttribute('data-estatus-actual', nuevoEstatus);
+                            } else {
+                                this.value = estadoAnterior;
+                                mostrarMensaje('❌ Error al cambiar estado', 'error');
+                            }
+                            this.style.opacity = '1';
+                        })
+                        .catch(error => {
+                            this.value = estadoAnterior;
+                            this.style.opacity = '1';
+                            mostrarMensaje('❌ Error de conexión', 'error');
+                        });
+                } else {
+                    this.value = estadoAnterior;
+                }
+            });
+            
+            actualizarColorSelect(select, select.value);
+        });
     </script>
 </body>
 </html>
