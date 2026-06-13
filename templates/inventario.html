@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INVENTAUTOS - Inventario</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         .stats-cards {
             display: grid;
@@ -65,6 +66,26 @@
             margin: 3px;
         }
         
+        /* Estilos para ordenamiento */
+        th a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            justify-content: center;
+        }
+        
+        th a:hover {
+            opacity: 0.9;
+            text-decoration: underline;
+        }
+        
+        .sort-icon {
+            font-size: 10px;
+            opacity: 0.7;
+        }
+        
         /* Estilos para estados */
         .status-disponible { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
         .status-vendido { background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
@@ -92,10 +113,11 @@
         body.dark-mode .select-estatus.estatus-vendido { background: #3a1e24; color: #ff9999; border-color: #dc3545; }
         body.dark-mode .select-estatus.estatus-reservado { background: #3a3a1e; color: #ffd966; border-color: #ffc107; }
         
-        /* Columna de foto */
+        /* Columna de foto - clickeable */
         .foto-cell {
             text-align: center;
             width: 60px;
+            cursor: pointer;
         }
         .miniatura-foto {
             width: 50px;
@@ -103,14 +125,259 @@
             object-fit: cover;
             border-radius: 6px;
             border: 1px solid var(--border-color);
+            transition: transform 0.2s;
+        }
+        .miniatura-foto:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
         .sin-foto-mini {
-            font-size: 20px;
+            font-size: 24px;
             opacity: 0.5;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        .sin-foto-mini:hover {
+            transform: scale(1.1);
+            opacity: 0.8;
         }
         
         .acciones-cell { white-space: nowrap; min-width: 180px; }
         .estatus-cell { text-align: center; min-width: 110px; }
+        
+        /* ============ MODAL PARA FOTOS ============ */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            position: relative;
+            background-color: var(--bg-card);
+            margin: 5% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 700px;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            animation: modalFadeIn 0.3s ease;
+        }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal-header {
+            padding: 20px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+        
+        .modal-header h3 i {
+            margin-right: 10px;
+        }
+        
+        .close-modal {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .close-modal:hover {
+            color: #ddd;
+            transform: scale(1.1);
+        }
+        
+        .modal-body {
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .foto-principal {
+            margin-bottom: 20px;
+        }
+        
+        .foto-principal img {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        .foto-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--border-color);
+            border-radius: 12px;
+            text-align: left;
+        }
+        
+        .foto-info p {
+            margin: 5px 0;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        
+        .foto-info strong {
+            color: #667eea;
+        }
+        
+        .modal-footer {
+            padding: 15px 25px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .btn-cerrar-modal {
+            background: #6c757d;
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .btn-editar-foto {
+            background: #17a2b8;
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: none;
+        }
+        
+        .btn-editar-foto:hover {
+            background: #138496;
+        }
+        
+        /* Estilos de paginación */
+        .pagination-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .pagination-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .pagination {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .pagination a, .pagination span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            padding: 0 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .pagination a {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .pagination a:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .pagination .active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .pagination .disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination .punto {
+            background: transparent;
+            cursor: default;
+        }
+        
+        .selector-por-pagina {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .selector-por-pagina label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .selector-por-pagina select {
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .pagination-container {
+                flex-direction: column;
+                text-align: center;
+            }
+            .pagination {
+                justify-content: center;
+            }
+            th {
+                font-size: 10px;
+            }
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+            .foto-principal img {
+                max-height: 250px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -125,7 +392,7 @@
     </div>
     
     <div class="stats-cards">
-        <div class="stat-card"><div class="number">{{ vehiculos|length }}</div><div class="label">Total Vehículos</div></div>
+        <div class="stat-card"><div class="number">{{ total_registros }}</div><div class="label">Total Vehículos</div></div>
         <div class="stat-card"><div class="number">{{ vehiculos|selectattr('estatus', 'equalto', 'DISPONIBLE')|list|length }}</div><div class="label">Disponibles</div></div>
         <div class="stat-card"><div class="number">{{ vehiculos|selectattr('estatus', 'equalto', 'VENDIDO')|list|length }}</div><div class="label">Vendidos</div></div>
         <div class="stat-card"><div class="number">{{ vehiculos|selectattr('estatus', 'equalto', 'RESERVADO')|list|length }}</div><div class="label">Reservados</div></div>
@@ -160,23 +427,26 @@
         <div class="filtros-title">🔍 Buscar Vehículos</div>
         <form method="GET" action="{{ url_for('inventario') }}">
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <input type="text" name="buscar" placeholder="Buscar por chassis, marca, modelo..." value="{{ request.args.get('buscar', '') }}" style="flex: 2;">
+                <input type="text" name="buscar" placeholder="Buscar por chassis, marca, modelo..." value="{{ buscar }}" style="flex: 2;">
                 <select name="marca">
                     <option value="">Todas las marcas</option>
                     {% for v in vehiculos %}
                         {% if loop.first or v.marca != vehiculos[loop.index0-1].marca %}
-                            <option value="{{ v.marca }}" {% if request.args.get('marca') == v.marca %}selected{% endif %}>{{ v.marca }}</option>
+                            <option value="{{ v.marca }}" {% if marca == v.marca %}selected{% endif %}>{{ v.marca }}</option>
                         {% endif %}
                     {% endfor %}
                 </select>
                 <select name="estatus">
                     <option value="">Todos</option>
-                    <option value="DISPONIBLE" {% if request.args.get('estatus') == 'DISPONIBLE' %}selected{% endif %}>Disponible</option>
-                    <option value="VENDIDO" {% if request.args.get('estatus') == 'VENDIDO' %}selected{% endif %}>Vendido</option>
-                    <option value="RESERVADO" {% if request.args.get('estatus') == 'RESERVADO' %}selected{% endif %}>Reservado</option>
+                    <option value="DISPONIBLE" {% if estatus == 'DISPONIBLE' %}selected{% endif %}>Disponible</option>
+                    <option value="VENDIDO" {% if estatus == 'VENDIDO' %}selected{% endif %}>Vendido</option>
+                    <option value="RESERVADO" {% if estatus == 'RESERVADO' %}selected{% endif %}>Reservado</option>
                 </select>
+                <input type="hidden" name="por_pagina" value="{{ por_pagina }}">
+                <input type="hidden" name="ordenar_por" value="{{ ordenar_por }}">
+                <input type="hidden" name="orden" value="{{ orden_direccion }}">
                 <button type="submit" class="btn-buscar">🔍 Buscar</button>
-                {% if request.args.get('buscar') or request.args.get('marca') or request.args.get('estatus') %}
+                {% if buscar or marca or estatus %}
                     <a href="{{ url_for('inventario') }}" class="btn-limpiar">✖ Limpiar</a>
                 {% endif %}
             </div>
@@ -197,20 +467,20 @@
                 <thead>
                     <tr>
                         <th>Foto</th>
-                        <th>Chassis</th>
-                        <th>Marca</th>
-                        <th>Modelo</th>
-                        <th>Tipo</th>
-                        <th>Año</th>
-                        <th>Color</th>
-                        <th>Precio</th>
-                        <th>Precio C</th>
-                        <th>Precio F</th>
+                        <th><a href="{{ url_for('inventario', pagina=pagina, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por='chassis', orden=orden_opuesto if ordenar_por == 'chassis' else 'asc') }}">Chassis {% if ordenar_por == 'chassis' %}{{ '↑' if orden_direccion == 'asc' else '↓' }}{% endif %}</a></th>
+                        <th><a href="{{ url_for('inventario', pagina=pagina, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por='marca', orden=orden_opuesto if ordenar_por == 'marca' else 'asc') }}">Marca {% if ordenar_por == 'marca' %}{{ '↑' if orden_direccion == 'asc' else '↓' }}{% endif %}</a></th>
+                        <th><a href="{{ url_for('inventario', pagina=pagina, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por='modelo', orden=orden_opuesto if ordenar_por == 'modelo' else 'asc') }}">Modelo {% if ordenar_por == 'modelo' %}{{ '↑' if orden_direccion == 'asc' else '↓' }}{% endif %}</a></th>
+                        <th><a href="{{ url_for('inventario', pagina=pagina, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por='tipo', orden=orden_opuesto if ordenar_por == 'tipo' else 'asc') }}">Tipo {% if ordenar_por == 'tipo' %}{{ '↑' if orden_direccion == 'asc' else '↓' }}{% endif %}</a></th>
+                        <th><a href="{{ url_for('inventario', pagina=pagina, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por='ano', orden=orden_opuesto if ordenar_por == 'ano' else 'asc') }}">Año {% if ordenar_por == 'ano' %}{{ '↑' if orden_direccion == 'asc' else '↓' }}{% endif %}</a></th>
+                        <th><a href="{{ url_for('inventario', pagina=pagina, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por='color', orden=orden_opuesto if ordenar_por == 'color' else 'asc') }}">Color {% if ordenar_por == 'color' %}{{ '↑' if orden_direccion == 'asc' else '↓' }}{% endif %}</a></th>
+                        <th><a href="{{ url_for('inventario', pagina=pagina, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por='precio', orden=orden_opuesto if ordenar_por == 'precio' else 'asc') }}">Precio {% if ordenar_por == 'precio' %}{{ '↑' if orden_direccion == 'asc' else '↓' }}{% endif %}</a></th>
+                        <th><a href="{{ url_for('inventario', pagina=pagina, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por='precio_contado', orden=orden_opuesto if ordenar_por == 'precio_contado' else 'asc') }}">Precio C</a></th>
+                        <th><a href="{{ url_for('inventario', pagina=pagina, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por='precio_financiamiento', orden=orden_opuesto if ordenar_por == 'precio_financiamiento' else 'asc') }}">Precio F</a></th>
                         <th>Locación</th>
                         <th>País</th>
                         <th>BL</th>
                         {% if rol == 'ADMIN' %}
-                            <th>Estatus</th>
+                            <th><a href="{{ url_for('inventario', pagina=pagina, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por='estatus', orden=orden_opuesto if ordenar_por == 'estatus' else 'asc') }}">Estatus {% if ordenar_por == 'estatus' %}{{ '↑' if orden_direccion == 'asc' else '↓' }}{% endif %}</a></th>
                             <th>Acciones</th>
                         {% endif %}
                     </tr>
@@ -218,7 +488,7 @@
                 <tbody>
                     {% for v in vehiculos %}
                     <tr id="fila-{{ v.id }}">
-                        <td class="foto-cell">
+                        <td class="foto-cell" onclick="verFoto({{ v.id }}, '{{ v.chassis }}', '{{ v.marca }}', '{{ v.modelo }}', '{{ v.foto if v.foto else '' }}')">
                             {% if v.foto %}
                                 <img src="{{ url_for('static', filename='uploads/' + v.foto) }}" class="miniatura-foto" alt="Foto">
                             {% else %}
@@ -259,6 +529,97 @@
         </div>
     </div>
     
+    <!-- Paginación -->
+    <div class="pagination-container">
+        <div class="pagination-info">
+            Mostrando <strong>{{ (pagina - 1) * por_pagina + 1 }}</strong> a 
+            <strong>{{ [pagina * por_pagina, total_registros]|min }}</strong> de 
+            <strong>{{ total_registros }}</strong> registros
+        </div>
+        
+        <div class="pagination">
+            {% if pagina > 1 %}
+                <a href="{{ url_for('inventario', pagina=1, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por=ordenar_por, orden=orden_direccion) }}">««</a>
+            {% else %}
+                <span class="disabled">««</span>
+            {% endif %}
+            
+            {% if pagina > 1 %}
+                <a href="{{ url_for('inventario', pagina=pagina-1, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por=ordenar_por, orden=orden_direccion) }}">«</a>
+            {% else %}
+                <span class="disabled">«</span>
+            {% endif %}
+            
+            {% if paginas_rango[0] > 1 %}
+                <a href="{{ url_for('inventario', pagina=1, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por=ordenar_por, orden=orden_direccion) }}">1</a>
+                {% if paginas_rango[0] > 2 %}
+                    <span class="punto">...</span>
+                {% endif %}
+            {% endif %}
+            
+            {% for p in paginas_rango %}
+                {% if p == pagina %}
+                    <span class="active">{{ p }}</span>
+                {% else %}
+                    <a href="{{ url_for('inventario', pagina=p, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por=ordenar_por, orden=orden_direccion) }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if paginas_rango[-1] < total_paginas %}
+                {% if paginas_rango[-1] < total_paginas - 1 %}
+                    <span class="punto">...</span>
+                {% endif %}
+                <a href="{{ url_for('inventario', pagina=total_paginas, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por=ordenar_por, orden=orden_direccion) }}">{{ total_paginas }}</a>
+            {% endif %}
+            
+            {% if pagina < total_paginas %}
+                <a href="{{ url_for('inventario', pagina=pagina+1, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por=ordenar_por, orden=orden_direccion) }}">»</a>
+            {% else %}
+                <span class="disabled">»</span>
+            {% endif %}
+            
+            {% if pagina < total_paginas %}
+                <a href="{{ url_for('inventario', pagina=total_paginas, por_pagina=por_pagina, buscar=buscar, marca=marca, estatus=estatus, ordenar_por=ordenar_por, orden=orden_direccion) }}">»»</a>
+            {% else %}
+                <span class="disabled">»»</span>
+            {% endif %}
+        </div>
+        
+        <div class="selector-por-pagina">
+            <label>Mostrar:</label>
+            <select id="por_pagina_select" onchange="cambiarPorPagina()">
+                {% for opcion in opciones_por_pagina %}
+                    <option value="{{ opcion }}" {% if por_pagina == opcion %}selected{% endif %}>{{ opcion }}</option>
+                {% endfor %}
+            </select>
+            <label>registros por página</label>
+        </div>
+    </div>
+    
+    <!-- MODAL PARA VER FOTO -->
+    <div id="fotoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-image"></i> <span id="modalTitulo">Foto del Vehículo</span></h3>
+                <span class="close-modal" onclick="cerrarModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="foto-principal">
+                    <img id="modalFoto" src="" alt="Foto del vehículo">
+                </div>
+                <div class="foto-info">
+                    <p><strong><i class="fas fa-chassis"></i> Chassis:</strong> <span id="modalChassis"></span></p>
+                    <p><strong><i class="fas fa-car"></i> Vehículo:</strong> <span id="modalVehiculo"></span></p>
+                    <p><strong><i class="fas fa-camera"></i> Estado:</strong> <span id="modalEstado"></span></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cerrar-modal" onclick="cerrarModal()">Cerrar</button>
+                <a href="#" id="btnEditarFoto" class="btn-editar-foto"><i class="fas fa-edit"></i> Editar Foto</a>
+            </div>
+        </div>
+    </div>
+    
     <script>
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
@@ -278,6 +639,57 @@
         const toggleBtn = document.getElementById('themeToggle');
         if (toggleBtn) toggleBtn.addEventListener('click', toggleTheme);
         
+        function cambiarPorPagina() {
+            const select = document.getElementById('por_pagina_select');
+            const valor = select.value;
+            const url = new URL(window.location.href);
+            url.searchParams.set('por_pagina', valor);
+            url.searchParams.set('pagina', 1);
+            window.location.href = url.toString();
+        }
+        
+        // ============ FUNCIONES DEL MODAL DE FOTOS ============
+        function verFoto(id, chassis, marca, modelo, foto) {
+            const modal = document.getElementById('fotoModal');
+            const modalFoto = document.getElementById('modalFoto');
+            const modalChassis = document.getElementById('modalChassis');
+            const modalVehiculo = document.getElementById('modalVehiculo');
+            const modalEstado = document.getElementById('modalEstado');
+            const btnEditar = document.getElementById('btnEditarFoto');
+            
+            modalChassis.textContent = chassis;
+            modalVehiculo.textContent = `${marca} ${modelo}`;
+            
+            if (foto && foto !== 'None' && foto !== '') {
+                modalFoto.src = "{{ url_for('static', filename='uploads/') }}" + foto;
+                modalEstado.innerHTML = '<span style="color: #28a745;">✓ Con foto</span>';
+                modalEstado.style.color = '#28a745';
+            } else {
+                modalFoto.src = "{{ url_for('static', filename='img/sin-foto.png') }}";
+                modalEstado.innerHTML = '<span style="color: #dc3545;">✗ Sin foto asignada</span>';
+                modalEstado.style.color = '#dc3545';
+            }
+            
+            btnEditar.href = "{{ url_for('editar_vehiculo', id=0) }}".replace('0', id);
+            
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function cerrarModal() {
+            const modal = document.getElementById('fotoModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        window.onclick = function(event) {
+            const modal = document.getElementById('fotoModal');
+            if (event.target == modal) {
+                cerrarModal();
+            }
+        }
+        
+        // Funciones de estatus (como antes)
         function actualizarColorSelect(select, estatus) {
             select.classList.remove('estatus-disponible', 'estatus-vendido', 'estatus-reservado');
             select.classList.add('estatus-' + estatus.toLowerCase());

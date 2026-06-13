@@ -15,6 +15,7 @@ import zipfile
 import shutil
 import base64
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
+import math
 
 app = Flask(__name__)
 app.secret_key = 'inventautos_secret_key_2024'
@@ -44,9 +45,8 @@ def generar_codigo_acceso(longitud=6):
 def generar_token_sesion():
     return secrets.token_urlsafe(32)
 
-# ============ CAPTCHA MEJORADO ============
+# ============ CAPTCHA ============
 def generar_captcha(longitud=6):
-    """Genera un CAPTCHA más complejo con letras y números"""
     caracteres = string.ascii_uppercase + string.digits
     caracteres = caracteres.replace('0', '').replace('O', '').replace('1', '').replace('I', '')
     texto = ''.join(random.choice(caracteres) for _ in range(longitud))
@@ -55,7 +55,6 @@ def generar_captcha(longitud=6):
     return texto
 
 def generar_imagen_captcha(texto):
-    """Genera una imagen CAPTCHA con distorsión"""
     ancho = 280
     alto = 90
     imagen = Image.new('RGB', (ancho, alto), color=(255, 255, 255))
@@ -370,25 +369,86 @@ def inventario():
     buscar = request.args.get('buscar', '')
     marca = request.args.get('marca', '')
     estatus = request.args.get('estatus', '')
-    query = "SELECT * FROM vehiculos WHERE 1=1"
+    
+    ordenar_por = request.args.get('ordenar_por', 'id')
+    orden_direccion = request.args.get('orden', 'desc')
+    
+    columnas_permitidas = {
+        'id': 'id', 'chassis': 'chassis', 'marca': 'marca', 'modelo': 'modelo',
+        'tipo': 'tipo', 'ano': 'ano', 'color': 'color', 'precio': 'precio',
+        'precio_contado': 'precio_contado', 'precio_financiamiento': 'precio_financiamiento',
+        'locacion': 'locacion', 'pais': 'pais', 'estatus': 'estatus', 'bl': 'bl'
+    }
+    
+    if ordenar_por not in columnas_permitidas:
+        ordenar_por = 'id'
+    if orden_direccion not in ['asc', 'desc']:
+        orden_direccion = 'desc'
+    
+    pagina = request.args.get('pagina', 1, type=int)
+    por_pagina = request.args.get('por_pagina', 10, type=int)
+    
+    opciones_por_pagina = [10, 25, 50, 100]
+    if por_pagina not in opciones_por_pagina:
+        por_pagina = 10
+    
+    query_base = "SELECT * FROM vehiculos WHERE 1=1"
     params = []
+    
     if buscar:
-        query += " AND (chassis LIKE ? OR marca LIKE ? OR modelo LIKE ?)"
+        query_base += " AND (chassis LIKE ? OR marca LIKE ? OR modelo LIKE ?)"
         params.extend([f'%{buscar}%', f'%{buscar}%', f'%{buscar}%'])
     if marca:
-        query += " AND marca = ?"
+        query_base += " AND marca = ?"
         params.append(marca)
     if estatus:
-        query += " AND estatus = ?"
+        query_base += " AND estatus = ?"
         params.append(estatus)
-    query += " ORDER BY id DESC"
+    
+    query_count = query_base.replace("SELECT *", "SELECT COUNT(*) as total")
+    
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute(query, params)
+    
+    cursor.execute(query_count, params)
+    total_registros = cursor.fetchone()['total']
+    
+    total_paginas = math.ceil(total_registros / por_pagina) if total_registros > 0 else 1
+    
+    if pagina < 1:
+        pagina = 1
+    if pagina > total_paginas and total_paginas > 0:
+        pagina = total_paginas
+    
+    offset = (pagina - 1) * por_pagina
+    
+    query = f"{query_base} ORDER BY {ordenar_por} {orden_direccion} LIMIT ? OFFSET ?"
+    params_paginado = params + [por_pagina, offset]
+    
+    cursor.execute(query, params_paginado)
     vehiculos = cursor.fetchall()
     conn.close()
-    registrar_log(session['user_id'], 'VER_INVENTARIO', 'vehiculos', None, f'Visualizó inventario', request.remote_addr)
-    return render_template('inventario.html', vehiculos=vehiculos, rol=session.get('rol'))
+    
+    max_paginas_mostrar = 5
+    inicio_rango = max(1, pagina - max_paginas_mostrar // 2)
+    fin_rango = min(total_paginas, inicio_rango + max_paginas_mostrar - 1)
+    
+    if fin_rango - inicio_rango + 1 < max_paginas_mostrar:
+        inicio_rango = max(1, fin_rango - max_paginas_mostrar + 1)
+    
+    paginas_rango = list(range(inicio_rango, fin_rango + 1))
+    orden_opuesto = 'asc' if orden_direccion == 'desc' else 'desc'
+    
+    registrar_log(session['user_id'], 'VER_INVENTARIO', 'vehiculos', None, f'Visualizó inventario - Página {pagina}', request.remote_addr)
+    
+    return render_template('inventario.html', 
+                         vehiculos=vehiculos, rol=session.get('rol'),
+                         pagina=pagina, por_pagina=por_pagina,
+                         total_registros=total_registros, total_paginas=total_paginas,
+                         paginas_rango=paginas_rango, opciones_por_pagina=opciones_por_pagina,
+                         buscar=buscar, marca=marca, estatus=estatus,
+                         ordenar_por=ordenar_por, orden_direccion=orden_direccion,
+                         orden_opuesto=orden_opuesto)
 
 @app.route('/cambiar_estatus_ajax/<int:id>')
 @login_required

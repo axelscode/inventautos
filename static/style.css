@@ -87,23 +87,62 @@ body {
 
 .toolbar {
     background: var(--bg-card);
-    padding: 10px 20px;
     border-radius: 12px;
+    padding: 15px;
     margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
 }
 
-.btn-agregar, .btn-usuarios {
+.btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    border-left: 2px solid var(--border-color);
+}
+
+.btn-group:first-child {
+    border-left: none;
+    padding-left: 0;
+}
+
+.btn-group-titulo {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-right: 5px;
+}
+
+.toolbar a {
     display: inline-block;
-    padding: 6px 15px;
+    padding: 6px 14px;
     border-radius: 8px;
     text-decoration: none;
     font-size: 12px;
     font-weight: 600;
-    margin-right: 10px;
+    transition: all 0.3s ease;
+}
+
+.toolbar a:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
 }
 
 .btn-agregar { background: #28a745; color: white; }
+.btn-importar { background: #ffc107; color: #333; }
+.btn-excel { background: #28a745; color: white; }
 .btn-usuarios { background: #17a2b8; color: white; }
+.btn-codigo { background: #17a2b8; color: white; }
+.btn-sesiones { background: #e83e8c; color: white; }
+.btn-dashboard { background: #6c757d; color: white; }
+.btn-logs { background: #fd7e14; color: white; }
+.btn-backups { background: #20c997; color: white; }
 
 .filtros-card {
     background: var(--bg-card);
@@ -191,70 +230,114 @@ body.dark-mode .status-disponible {
     font-size: 11px;
 }
 
-/* Grupos de botones en el toolbar */
-.toolbar {
-    background: var(--bg-card);
-    padding: 15px 20px;
-    border-radius: 12px;
+.btn-editar { background: #ffc107; color: #333; }
+.btn-eliminar { background: #dc3545; color: white; }
+
+.alert {
+    padding: 10px;
     margin-bottom: 12px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.alert-success { background: #d4edda; color: #155724; }
+.alert-error { background: #f8d7da; color: #721c24; }
+
+body.dark-mode .alert-success { background: #1e3a2e; color: #90ee90; }
+body.dark-mode .alert-error { background: #3a1e24; color: #ff9999; }
+
+/* ============ ESTILOS DE PAGINACIÓN ============ */
+.pagination-container {
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--bg-card);
+    border-radius: 12px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
+    justify-content: space-between;
     align-items: center;
-}
-
-.btn-group {
-    display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    padding: 0 10px;
-    border-left: 2px solid var(--border-color);
+    gap: 15px;
 }
 
-.btn-group:first-child {
-    border-left: none;
-    padding-left: 0;
-}
-
-.btn-group-titulo {
-    font-size: 11px;
-    font-weight: 600;
+.pagination-info {
+    font-size: 13px;
     color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-right: 5px;
 }
 
-/* Estilos base para todos los botones */
-.toolbar a {
-    display: inline-block;
-    padding: 6px 14px;
+.pagination {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.pagination a, .pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
     border-radius: 8px;
     text-decoration: none;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 500;
     transition: all 0.3s ease;
 }
 
-.toolbar a:hover {
-    transform: translateY(-2px);
-    opacity: 0.9;
+.pagination a {
+    background: var(--border-color);
+    color: var(--text-primary);
 }
 
-/* Botones específicos */
-.btn-agregar { background: #28a745; color: white; }
-.btn-importar { background: #ffc107; color: #333; }
-.btn-excel { background: #28a745; color: white; }
-.btn-usuarios { background: #17a2b8; color: white; }
-.btn-codigo { background: #17a2b8; color: white; }
-.btn-sesiones { background: #fd7e14; color: white; }
-.btn-dashboard { background: #6c757d; color: white; }
-.btn-logs { background: #fd7e14; color: white; }
-.btn-backups { background: #fd7e14; color: white; }
+.pagination a:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
 
-/* Responsive */
+.pagination .active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.pagination .disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination .punto {
+    background: transparent;
+    cursor: default;
+}
+
+.selector-por-pagina {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.selector-por-pagina label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.selector-por-pagina select {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+/* ============ RESPONSIVE ============ */
 @media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
     .toolbar {
         flex-direction: column;
         align-items: stretch;
@@ -276,32 +359,18 @@ body.dark-mode .status-disponible {
         text-align: center;
         flex: 1;
     }
-}
-
-
-.btn-editar { background: #ffc107; color: #333; }
-.btn-eliminar { background: #dc3545; color: white; }
-
-.alert {
-    padding: 10px;
-    margin-bottom: 12px;
-    border-radius: 8px;
-    font-size: 12px;
-}
-
-.alert-success { background: #d4edda; color: #155724; }
-.alert-error { background: #f8d7da; color: #721c24; }
-
-body.dark-mode .alert-success { background: #1e3a2e; color: #90ee90; }
-body.dark-mode .alert-error { background: #3a1e24; color: #ff9999; }
-
-@media (max-width: 768px) {
-    .header {
-        flex-direction: column;
-        text-align: center;
-    }
+    
     .filtros-card input, .filtros-card select, .btn-buscar, .btn-limpiar {
         width: 100%;
         margin-bottom: 5px;
+    }
+    
+    .pagination-container {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .pagination {
+        justify-content: center;
     }
 }
