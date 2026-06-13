@@ -5,73 +5,161 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INVENTAUTOS - Editar Vehículo</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        .form-container { background: var(--bg-card); border-radius: 16px; padding: 25px; max-width: 900px; margin: 0 auto; }
-        .form-title { font-size: 24px; color: #667eea; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--border-color); }
-        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-        .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-weight: 600; margin-bottom: 8px; color: var(--text-primary); font-size: 13px; }
-        .form-group label .required { color: #dc3545; }
-        .form-group input, .form-group select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: var(--bg-card); color: var(--text-primary); }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; }
-        .form-group.full-width { grid-column: span 2; }
-        .form-actions { margin-top: 30px; display: flex; gap: 15px; justify-content: flex-end; }
-        .btn-actualizar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
-        .btn-cancelar { background: #6c757d; color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; text-decoration: none; display: inline-block; text-align: center; }
+        .form-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 25px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .form-title {
+            font-size: 24px;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        .form-group label .required {
+            color: #dc3545;
+        }
+        .form-group input, .form-group select {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .form-group.full-width {
+            grid-column: span 2;
+        }
         
-        /* Estilos para la sección de fotos */
-        .foto-section {
+        /* ============ SECCIÓN DE FOTOS MEJORADA ============ */
+        .fotos-section {
             grid-column: span 2;
             background: var(--bg-card);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 20px;
             margin-top: 10px;
             border: 1px solid var(--border-color);
         }
-        .foto-titulo {
-            font-size: 16px;
+        .fotos-titulo {
+            font-size: 18px;
             font-weight: 600;
             color: var(--text-primary);
             margin-bottom: 15px;
             display: flex;
             align-items: center;
             gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
         }
-        .foto-actual {
-            text-align: center;
+        .fotos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
             margin-bottom: 20px;
         }
-        .foto-actual img {
-            max-width: 200px;
-            max-height: 150px;
-            border-radius: 8px;
-            object-fit: cover;
-            border: 1px solid var(--border-color);
-        }
-        .sin-foto {
+        .foto-item {
+            position: relative;
             background: var(--border-color);
-            padding: 40px;
-            border-radius: 8px;
-            color: var(--text-secondary);
+            border-radius: 12px;
+            padding: 10px;
             text-align: center;
+            transition: transform 0.2s;
         }
-        .btn-foto {
-            background: #17a2b8;
-            color: white;
-            padding: 8px 20px;
+        .foto-item:hover {
+            transform: translateY(-3px);
+        }
+        .foto-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
             border-radius: 8px;
-            text-decoration: none;
-            font-size: 13px;
-            display: inline-block;
-            margin: 5px;
-            cursor: pointer;
-            border: none;
+            margin-bottom: 8px;
+        }
+        .foto-numero {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
         }
         .btn-eliminar-foto {
             background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            width: 100%;
         }
-        .btn-subir-foto {
+        .btn-eliminar-foto:hover {
+            background: #c82333;
+        }
+        .sin-fotos {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            background: var(--border-color);
+            border-radius: 12px;
+        }
+        .upload-area {
+            margin-top: 20px;
+            padding: 20px;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        .upload-area i {
+            font-size: 40px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .upload-area p {
+            margin: 5px 0;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .upload-area .subir-btn {
             background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .upload-area .subir-btn:hover {
+            background: #218838;
         }
         .info-foto {
             font-size: 11px;
@@ -80,12 +168,50 @@
             text-align: center;
         }
         
-        @media (max-width: 768px) { 
-            .form-grid { grid-template-columns: 1fr; } 
-            .form-group.full-width { grid-column: span 1; } 
-            .foto-section { grid-column: span 1; }
-            .form-actions { flex-direction: column; } 
-            .btn-actualizar, .btn-cancelar { width: 100%; text-align: center; } 
+        .form-actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+        .btn-actualizar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .btn-cancelar {
+            background: #6c757d;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-group.full-width, .fotos-section {
+                grid-column: span 1;
+            }
+            .form-actions {
+                flex-direction: column;
+            }
+            .btn-actualizar, .btn-cancelar {
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -100,9 +226,9 @@
     </div>
     
     <div class="form-container">
-        <div class="form-title">✏️ Editando Vehículo #{{ vehiculo.id }}</div>
+        <div class="form-title">✏️ Editando Vehículo #{{ vehiculo.id }} - {{ vehiculo.marca }} {{ vehiculo.modelo }}</div>
         
-        <form method="POST">
+        <form method="POST" id="editForm">
             <div class="form-grid">
                 <div class="form-group">
                     <label>Chassis <span class="required">*</span></label>
@@ -161,31 +287,31 @@
                     <input type="text" name="bl" value="{{ vehiculo.bl }}">
                 </div>
                 
-                <!-- SECCIÓN DE FOTO -->
-                <div class="foto-section">
-                    <div class="foto-titulo">
-                        📸 Foto del Vehículo
+                <!-- SECCIÓN DE MÚLTIPLES FOTOS -->
+                <div class="fotos-section">
+                    <div class="fotos-titulo">
+                        <i class="fas fa-images"></i> Galería de Fotos (Máximo 12)
                     </div>
                     
-                    {% if vehiculo.foto %}
-                    <div class="foto-actual">
-                        <img src="{{ url_for('static', filename='uploads/' + vehiculo.foto) }}" alt="Foto del vehículo">
+                    <div id="galeria-fotos" class="fotos-grid">
+                        <!-- Las fotos se cargarán aquí vía JavaScript -->
+                        <div class="sin-fotos" id="loadingFotos">
+                            <i class="fas fa-spinner fa-spin"></i> Cargando fotos...
+                        </div>
                     </div>
-                    <div style="text-align: center;">
-                        <a href="{{ url_for('eliminar_foto', id=vehiculo.id) }}" class="btn-foto btn-eliminar-foto" onclick="return confirm('¿Eliminar esta foto?')">🗑 Eliminar Foto</a>
-                    </div>
-                    {% else %}
-                    <div class="sin-foto">
-                        📷 Sin foto asignada
-                    </div>
-                    {% endif %}
                     
-                    <form method="POST" action="{{ url_for('subir_foto', id=vehiculo.id) }}" enctype="multipart/form-data" style="margin-top: 15px; text-align: center;">
-                        <input type="file" name="foto" accept="image/png, image/jpeg, image/jpg, image/gif, image/webp" required style="margin-bottom: 10px;">
-                        <button type="submit" class="btn-foto btn-subir-foto">📤 Subir Nueva Foto</button>
-                    </form>
+                    <div class="upload-area" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Haz clic aquí para seleccionar fotos</p>
+                        <p style="font-size: 11px;">Puedes seleccionar hasta 12 fotos a la vez</p>
+                        <input type="file" id="fotosInput" accept="image/png, image/jpeg, image/jpg, image/gif, image/webp" multiple style="display: none;">
+                        <button type="button" class="subir-btn" id="subirFotosBtn">
+                            <i class="fas fa-upload"></i> Subir Fotos
+                        </button>
+                    </div>
+                    
                     <div class="info-foto">
-                        Formatos permitidos: PNG, JPG, JPEG, GIF, WEBP | Tamaño máximo: 16MB
+                        <i class="fas fa-info-circle"></i> Formatos permitidos: PNG, JPG, JPEG, GIF, WEBP | Tamaño máximo por foto: 16MB | Máximo 12 fotos
                     </div>
                 </div>
             </div>
@@ -198,6 +324,10 @@
     </div>
     
     <script>
+        // Variables
+        const vehiculoId = {{ vehiculo.id }};
+        let fotosActuales = [];
+        
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
@@ -215,6 +345,140 @@
         
         const toggleBtn = document.getElementById('themeToggle');
         if (toggleBtn) toggleBtn.addEventListener('click', toggleTheme);
+        
+        // Cargar fotos existentes
+        function cargarFotos() {
+            fetch(`/api/fotos/${vehiculoId}`)
+                .then(response => response.json())
+                .then(data => {
+                    fotosActuales = data.fotos;
+                    renderizarGaleria();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('galeria-fotos').innerHTML = '<div class="sin-fotos"><i class="fas fa-exclamation-circle"></i> Error al cargar fotos</div>';
+                });
+        }
+        
+        // Renderizar galería
+        function renderizarGaleria() {
+            const galeria = document.getElementById('galeria-fotos');
+            
+            if (fotosActuales.length === 0) {
+                galeria.innerHTML = '<div class="sin-fotos"><i class="fas fa-camera"></i> No hay fotos para este vehículo</div>';
+                return;
+            }
+            
+            let html = '';
+            fotosActuales.forEach((foto, index) => {
+                html += `
+                    <div class="foto-item" data-foto="${foto}">
+                        <img src="{{ url_for('static', filename='uploads/${vehiculoId}/${foto}') }}" alt="Foto ${index + 1}">
+                        <div class="foto-numero">Foto ${index + 1}</div>
+                        <button type="button" class="btn-eliminar-foto" onclick="eliminarFoto('${foto}')">
+                            <i class="fas fa-trash-alt"></i> Eliminar
+                        </button>
+                    </div>
+                `;
+            });
+            galeria.innerHTML = html;
+        }
+        
+        // Eliminar foto
+        function eliminarFoto(nombreFoto) {
+            if (!confirm('¿Eliminar esta foto?')) return;
+            
+            fetch(`/eliminar_foto_ajax/${vehiculoId}/${nombreFoto}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cargarFotos(); // Recargar galería
+                    mostrarMensaje('✅ Foto eliminada', 'success');
+                } else {
+                    mostrarMensaje('❌ Error al eliminar', 'error');
+                }
+            })
+            .catch(error => {
+                mostrarMensaje('❌ Error de conexión', 'error');
+            });
+        }
+        
+        // Subir múltiples fotos
+        function subirFotos() {
+            const input = document.getElementById('fotosInput');
+            const archivos = input.files;
+            
+            if (archivos.length === 0) {
+                mostrarMensaje('❌ Selecciona al menos una foto', 'error');
+                return;
+            }
+            
+            if (fotosActuales.length + archivos.length > 12) {
+                mostrarMensaje(`❌ Máximo 12 fotos. Actualmente tienes ${fotosActuales.length}`, 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            for (let i = 0; i < archivos.length; i++) {
+                formData.append('fotos', archivos[i]);
+            }
+            
+            fetch(`/subir_fotos_multiple/${vehiculoId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarMensaje(`✅ ${data.subidas} fotos subidas exitosamente`, 'success');
+                    input.value = ''; // Limpiar input
+                    cargarFotos(); // Recargar galería
+                } else {
+                    mostrarMensaje(`❌ Error: ${data.error || 'No se pudieron subir las fotos'}`, 'error');
+                }
+            })
+            .catch(error => {
+                mostrarMensaje('❌ Error de conexión', 'error');
+            });
+        }
+        
+        // Configurar el botón de subir para que abra el selector de archivos
+        document.getElementById('subirFotosBtn').addEventListener('click', function() {
+            document.getElementById('fotosInput').click();
+        });
+        
+        // También hacer click en el área de upload
+        document.getElementById('uploadArea').addEventListener('click', function(e) {
+            if (e.target !== document.getElementById('subirFotosBtn')) {
+                document.getElementById('fotosInput').click();
+            }
+        });
+        
+        // Cuando se seleccionan archivos, subir automáticamente
+        document.getElementById('fotosInput').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                subirFotos();
+            }
+        });
+        
+        // Mostrar mensaje temporal
+        function mostrarMensaje(mensaje, tipo) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${tipo}`;
+            alertDiv.textContent = mensaje;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.maxWidth = '300px';
+            document.body.appendChild(alertDiv);
+            setTimeout(() => alertDiv.remove(), 3000);
+        }
+        
+        // Cargar fotos al iniciar
+        cargarFotos();
     </script>
 </body>
 </html>

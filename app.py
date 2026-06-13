@@ -485,42 +485,84 @@ def estadisticas():
     return jsonify({'total': total, 'disponibles': disponibles, 'vendidos': vendidos, 'reservados': reservados})
 
 # ============ RUTAS DE FOTOS ============
-@app.route('/subir_foto/<int:id>', methods=['POST'])
+# ============ RUTAS DE MÚLTIPLES FOTOS ============
+
+@app.route('/api/fotos/<int:id>')
+@login_required
+def obtener_fotos(id):
+    """Obtiene la lista de fotos de un vehículo"""
+    fotos_dir = os.path.join(UPLOAD_FOLDER_FOTOS, str(id))
+    fotos = []
+    if os.path.exists(fotos_dir):
+        for archivo in os.listdir(fotos_dir):
+            if allowed_image(archivo):
+                fotos.append(archivo)
+    fotos.sort()
+    return jsonify({'fotos': fotos})
+
+@app.route('/subir_fotos_multiple/<int:id>', methods=['POST'])
 @login_required
 @admin_required
-def subir_foto(id):
-    if 'foto' not in request.files:
-        flash('No se seleccionó ningún archivo', 'error')
-        return redirect(url_for('editar_vehiculo', id=id))
-    archivo = request.files['foto']
-    if archivo.filename == '':
-        flash('No se seleccionó ningún archivo', 'error')
-        return redirect(url_for('editar_vehiculo', id=id))
-    if not allowed_image(archivo.filename):
-        flash('Formato no permitido. Use: png, jpg, jpeg, gif, webp', 'error')
-        return redirect(url_for('editar_vehiculo', id=id))
-    try:
-        extension = archivo.filename.rsplit('.', 1)[1].lower()
-        nombre_archivo = f"vehiculo_{id}_{random.randint(1000, 9999)}.{extension}"
-        nombre_archivo = secure_filename(nombre_archivo)
-        ruta_archivo = os.path.join(UPLOAD_FOLDER_FOTOS, nombre_archivo)
-        archivo.save(ruta_archivo)
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT foto FROM vehiculos WHERE id = ?", (id,))
-        foto_anterior = cursor.fetchone()
-        if foto_anterior and foto_anterior['foto']:
-            ruta_anterior = os.path.join(UPLOAD_FOLDER_FOTOS, foto_anterior['foto'])
-            if os.path.exists(ruta_anterior):
-                os.remove(ruta_anterior)
-        cursor.execute("UPDATE vehiculos SET foto = ? WHERE id = ?", (nombre_archivo, id))
-        conn.commit()
-        conn.close()
-        registrar_log(session['user_id'], 'SUBIR_FOTO', 'vehiculos', id, f'Subió foto: {nombre_archivo}', request.remote_addr)
-        flash('✅ Foto subida exitosamente', 'success')
-    except Exception as e:
-        flash(f'❌ Error al subir foto: {str(e)}', 'error')
-    return redirect(url_for('editar_vehiculo', id=id))
+def subir_fotos_multiple(id):
+    """Sube múltiples fotos para un vehículo"""
+    if 'fotos' not in request.files:
+        return jsonify({'success': False, 'error': 'No se seleccionaron archivos'})
+    
+    archivos = request.files.getlist('fotos')
+    if len(archivos) == 0:
+        return jsonify({'success': False, 'error': 'No se seleccionaron archivos'})
+    
+    # Crear directorio para el vehículo
+    vehiculo_dir = os.path.join(UPLOAD_FOLDER_FOTOS, str(id))
+    os.makedirs(vehiculo_dir, exist_ok=True)
+    
+    # Contar fotos actuales
+    fotos_actuales = [f for f in os.listdir(vehiculo_dir) if allowed_image(f)]
+    
+    if len(fotos_actuales) + len(archivos) > 12:
+        return jsonify({'success': False, 'error': f'Máximo 12 fotos. Actualmente tienes {len(fotos_actuales)}'})
+    
+    subidas = 0
+    errores = []
+    
+    for archivo in archivos:
+        if archivo.filename == '':
+            continue
+        if not allowed_image(archivo.filename):
+            errores.append(f'{archivo.filename}: Formato no permitido')
+            continue
+        
+        try:
+            extension = archivo.filename.rsplit('.', 1)[1].lower()
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            nombre_archivo = f"foto_{timestamp}_{random.randint(1000, 9999)}.{extension}"
+            nombre_archivo = secure_filename(nombre_archivo)
+            ruta_archivo = os.path.join(vehiculo_dir, nombre_archivo)
+            archivo.save(ruta_archivo)
+            subidas += 1
+            registrar_log(session['user_id'], 'SUBIR_FOTO', 'vehiculos', id, f'Subió foto: {nombre_archivo}', request.remote_addr)
+        except Exception as e:
+            errores.append(f'{archivo.filename}: {str(e)}')
+    
+    if subidas > 0:
+        return jsonify({'success': True, 'subidas': subidas, 'errores': errores})
+    else:
+        return jsonify({'success': False, 'error': 'No se pudo subir ninguna foto', 'detalles': errores})
+
+@app.route('/eliminar_foto_ajax/<int:id>/<nombre_foto>', methods=['DELETE'])
+@login_required
+@admin_required
+def eliminar_foto_ajax(id, nombre_foto):
+    """Elimina una foto específica de un vehículo"""
+    vehiculo_dir = os.path.join(UPLOAD_FOLDER_FOTOS, str(id))
+    ruta_archivo = os.path.join(vehiculo_dir, nombre_foto)
+    
+    if os.path.exists(ruta_archivo):
+        os.remove(ruta_archivo)
+        registrar_log(session['user_id'], 'ELIMINAR_FOTO', 'vehiculos', id, f'Eliminó foto: {nombre_foto}', request.remote_addr)
+        return jsonify({'success': True})
+    
+    return jsonify({'success': False, 'error': 'Foto no encontrada'})
 
 @app.route('/eliminar_foto/<int:id>')
 @login_required
