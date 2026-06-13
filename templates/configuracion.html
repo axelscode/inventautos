@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INVENTAUTOS - Configuración</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .config-container { max-width: 1000px; margin: 0 auto; }
+        .config-card { background: var(--bg-card); border-radius: 20px; padding: 30px; margin-bottom: 25px; }
+        .config-title { font-size: 22px; color: #667eea; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--border-color); display: flex; align-items: center; gap: 10px; }
+        .preview-container { background: var(--border-color); border-radius: 16px; padding: 30px; text-align: center; margin-bottom: 25px; }
+        .preview-header { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 15px; }
+        .preview-logo { display: flex; align-items: center; justify-content: center; }
+        .preview-logo.horizontal img { max-width: 300px; max-height: 80px; }
+        .preview-logo.cuadrado img { width: 120px; height: 120px; object-fit: contain; }
+        .preview-logo.circular img { width: 100px; height: 100px; object-fit: cover; border-radius: 50%; }
+        .preview-eslogan { font-size: 14px; color: var(--text-secondary); font-style: italic; }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; margin-bottom: 10px; font-weight: 600; color: var(--text-primary); font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 12px; font-size: 14px; background: var(--bg-card); color: var(--text-primary); }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; }
+        .radio-group { display: flex; gap: 20px; flex-wrap: wrap; }
+        .radio-option { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .radio-option input { width: auto; cursor: pointer; }
+        .logo-preview { margin-top: 15px; padding: 20px; background: var(--border-color); border-radius: 12px; text-align: center; }
+        .logo-preview img { max-width: 200px; max-height: 80px; object-fit: contain; }
+        .info-box { background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        body.dark-mode .info-box { background: #1e3a5f; border-left-color: #667eea; }
+        .info-box p { margin: 5px 0; font-size: 13px; color: var(--text-primary); }
+        .btn-guardar { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 12px 30px; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 600; width: 100%; }
+        .btn-eliminar-logo { background: #dc3545; color: white; padding: 8px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; margin-top: 10px; }
+        .formatos { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        .formato-badge { background: var(--border-color); padding: 4px 10px; border-radius: 20px; font-size: 11px; color: var(--text-secondary); }
+        @media (max-width: 768px) { .config-card { padding: 20px; } .preview-header { flex-direction: column; text-align: center; } .radio-group { flex-direction: column; gap: 10px; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚙️ Configuración de Empresa</h1>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button id="themeToggle" class="theme-btn">🌙 Dark</button>
+            <a href="{{ url_for('dashboard') }}" class="btn-home">← Dashboard</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Salir</a>
+        </div>
+    </div>
+    <div class="config-container">
+        <div class="config-card">
+            <div class="config-title"><i class="fas fa-eye"></i> Vista Previa</div>
+            <div class="preview-container">
+                <div class="preview-header">
+                    <div class="preview-logo {{ logo_tipo }}">
+                        {% if logo_url %}
+                            <img src="{{ url_for('static', filename='uploads/' + logo_url) }}" alt="Logo">
+                        {% else %}
+                            <div style="font-size: 36px; color: #667eea;"><i class="fas fa-car"></i></div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h2 style="color: #667eea; margin: 0;">INVENTAUTOS</h2>
+                        <div class="preview-eslogan">{{ eslogan }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="info-box"><p><i class="fas fa-info-circle"></i> <strong>Vista previa</strong> - Así se verá el logo y eslogan en todas las páginas de la aplicación.</p></div>
+        </div>
+        <form method="POST" action="{{ url_for('configuracion') }}" enctype="multipart/form-data">
+            <div class="config-card">
+                <div class="config-title"><i class="fas fa-image"></i> Logo de la Empresa</div>
+                <div class="form-group">
+                    <label><i class="fas fa-upload"></i> Subir Logo</label>
+                    <input type="file" name="logo" accept="image/png, image/jpeg, image/jpg, image/gif, image/webp, image/svg+xml">
+                    <div class="formatos">
+                        <span class="formato-badge">PNG (fondo transparente)</span>
+                        <span class="formato-badge">JPG</span>
+                        <span class="formato-badge">SVG (recomendado)</span>
+                        <span class="formato-badge">GIF</span>
+                        <span class="formato-badge">WEBP</span>
+                    </div>
+                    <small style="color: var(--text-secondary); margin-top: 8px; display: block;"><i class="fas fa-info-circle"></i> Tamaño recomendado: 250-400px ancho x 70-100px alto | Peso máximo: 200KB</small>
+                </div>
+                {% if logo_url %}
+                <div class="logo-preview">
+                    <img src="{{ url_for('static', filename='uploads/' + logo_url) }}" alt="Logo actual">
+                    <div style="margin-top: 10px;"><button type="submit" name="eliminar_logo" value="1" class="btn-eliminar-logo" onclick="return confirm('¿Eliminar el logo actual?')"><i class="fas fa-trash-alt"></i> Eliminar Logo</button></div>
+                </div>
+                {% endif %}
+                <div class="form-group" style="margin-top: 20px;">
+                    <label><i class="fas fa-crop-alt"></i> Tipo de Logo</label>
+                    <div class="radio-group">
+                        <label class="radio-option"><input type="radio" name="logo_tipo" value="horizontal" {% if logo_tipo == 'horizontal' %}checked{% endif %}> 📐 Horizontal (recomendado)</label>
+                        <label class="radio-option"><input type="radio" name="logo_tipo" value="cuadrado" {% if logo_tipo == 'cuadrado' %}checked{% endif %}> 🔲 Cuadrado (200x200)</label>
+                        <label class="radio-option"><input type="radio" name="logo_tipo" value="circular" {% if logo_tipo == 'circular' %}checked{% endif %}> ⭕ Circular (100x100)</label>
+                    </div>
+                </div>
+            </div>
+            <div class="config-card">
+                <div class="config-title"><i class="fas fa-tag"></i> Eslogan de la Empresa</div>
+                <div class="form-group">
+                    <label><i class="fas fa-quote-left"></i> Eslogan</label>
+                    <input type="text" name="eslogan" value="{{ eslogan }}" placeholder="Ej: Tu mejor opción en vehículos" maxlength="100">
+                    <small style="color: var(--text-secondary); margin-top: 5px; display: block;">Máximo 100 caracteres</small>
+                </div>
+            </div>
+            <div class="config-card">
+                <div class="config-title"><i class="fas fa-save"></i> Guardar Cambios</div>
+                <button type="submit" class="btn-guardar"><i class="fas fa-check-circle"></i> Guardar Configuración</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+        }
+        const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (savedDarkMode) {
+            document.body.classList.add('dark-mode');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = '☀️ Light';
+        }
+        const toggleBtn = document.getElementById('themeToggle');
+        if (toggleBtn) toggleBtn.addEventListener('click', toggleTheme);
+    </script>
+</body>
+</html>

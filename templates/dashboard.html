@@ -29,11 +29,34 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>📊 Dashboard</h1>
+        <div class="header">
+        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+            {% set logo_url = get_config('logo_url') %}
+            {% set logo_tipo = get_config('logo_tipo') %}
+            {% set eslogan = get_config('eslogan') %}
+            
+            {% if logo_url %}
+                <div>
+                    <img src="{{ url_for('static', filename='uploads/' + logo_url) }}" alt="Logo" style="max-height: 50px; max-width: 200px;">
+                    {% if eslogan %}
+                        <span style="font-size: 11px; color: var(--text-secondary); margin-left: 10px;">{{ eslogan }}</span>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div>
+                    <h1 style="margin: 0; font-size: 20px; color: #667eea;">📊 Dashboard</h1>
+                    {% if eslogan %}
+                        <span style="font-size: 11px; color: var(--text-secondary);">{{ eslogan }}</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
         <div style="display: flex; align-items: center; gap: 15px;">
             <button id="themeToggle" class="theme-btn">🌙 Dark</button>
             <a href="{{ url_for('inventario') }}" class="btn-home">🏠 Home</a>
+            {% if session.rol == 'ADMIN' %}
+                <a href="{{ url_for('configuracion') }}" class="btn-config" style="background: #fd7e14; color: white; padding: 6px 15px; border-radius: 8px; text-decoration: none; font-size: 12px;">⚙️ Configuración</a>
+            {% endif %}
             <span class="user-badge">👤 {{ session.usuario_id }} ({{ session.rol }})</span>
             <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Salir</a>
         </div>

@@ -435,8 +435,28 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🚗 INVENTAUTOS</h1>
+        <div class="header">
+        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+            {% set logo_url = get_config('logo_url') %}
+            {% set logo_tipo = get_config('logo_tipo') %}
+            {% set eslogan = get_config('eslogan') %}
+            
+            {% if logo_url %}
+                <div>
+                    <img src="{{ url_for('static', filename='uploads/' + logo_url) }}" alt="Logo" style="max-height: 50px; max-width: 200px;">
+                    {% if eslogan %}
+                        <span style="font-size: 11px; color: var(--text-secondary); margin-left: 10px;">{{ eslogan }}</span>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div>
+                    <h1 style="margin: 0; font-size: 20px; color: #667eea;">🚗 INVENTAUTOS</h1>
+                    {% if eslogan %}
+                        <span style="font-size: 11px; color: var(--text-secondary);">{{ eslogan }}</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
         <div style="display: flex; align-items: center; gap: 15px;">
             <button id="themeToggle" class="theme-btn">🌙 Dark</button>
             <a href="{{ url_for('inventario') }}" class="btn-home">🏠 Home</a>

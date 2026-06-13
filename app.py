@@ -31,7 +31,7 @@ os.makedirs('uploads', exist_ok=True)
 os.makedirs(UPLOAD_FOLDER_FOTOS, exist_ok=True)
 
 ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'csv'}
-ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -184,6 +184,31 @@ def init_db():
         cursor.execute("ALTER TABLE vehiculos ADD COLUMN foto TEXT DEFAULT NULL")
     except:
         pass
+    
+    # Tabla de configuración de empresa
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS configuracion (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            clave TEXT UNIQUE NOT NULL,
+            valor TEXT,
+            tipo TEXT DEFAULT 'texto'
+        )
+    ''')
+    
+    # Insertar configuraciones por defecto si no existen
+    config_default = [
+        ('logo_url', '', 'imagen'),
+        ('logo_tipo', 'horizontal', 'texto'),
+        ('eslogan', 'Tu mejor opción en vehículos', 'texto'),
+        ('empresa_nombre', 'INVENTAUTOS', 'texto')
+    ]
+    
+    for clave, valor, tipo in config_default:
+        cursor.execute("SELECT id FROM configuracion WHERE clave = ?", (clave,))
+        if not cursor.fetchone():
+            cursor.execute("INSERT INTO configuracion (clave, valor, tipo) VALUES (?, ?, ?)", 
+                          (clave, valor, tipo))
+    
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS sesiones_activas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -235,6 +260,31 @@ def init_db():
     conn.close()
 
 init_db()
+
+# ============ FUNCIONES DE CONFIGURACIÓN ============
+def get_config(clave):
+    """Obtiene un valor de configuración"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT valor FROM configuracion WHERE clave = ?", (clave,))
+    resultado = cursor.fetchone()
+    conn.close()
+    return resultado['valor'] if resultado else None
+
+def set_config(clave, valor):
+    """Actualiza un valor de configuración"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE configuracion SET valor = ? WHERE clave = ?", (valor, clave))
+    conn.commit()
+    conn.close()
+
+@app.context_processor
+def utility_processor():
+    """Hace que get_config esté disponible en todos los templates"""
+    def get_config_global(clave):
+        return get_config(clave)
+    return dict(get_config=get_config_global)
 
 # ============ DECORADORES ============
 def login_required(f):
@@ -484,18 +534,70 @@ def estadisticas():
     conn.close()
     return jsonify({'total': total, 'disponibles': disponibles, 'vendidos': vendidos, 'reservados': reservados})
 
-# ============ RUTAS DE FOTOS ============
-# ============ RUTAS DE MÚLTIPLES FOTOS ============
+# ============ RUTAS DE CONFIGURACIÓN (SOLO ADMIN) ============
+@app.route('/configuracion', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def configuracion():
+    if request.method == 'POST':
+        eslogan = request.form.get('eslogan', '')
+        set_config('eslogan', eslogan)
+        
+        logo_tipo = request.form.get('logo_tipo', 'horizontal')
+        set_config('logo_tipo', logo_tipo)
+        
+        if 'logo' in request.files:
+            archivo = request.files['logo']
+            if archivo and archivo.filename != '' and allowed_image(archivo.filename):
+                try:
+                    extension = archivo.filename.rsplit('.', 1)[1].lower()
+                    nombre_archivo = f"logo_empresa.{extension}"
+                    ruta_archivo = os.path.join(UPLOAD_FOLDER_FOTOS, nombre_archivo)
+                    
+                    if os.path.exists(ruta_archivo):
+                        os.remove(ruta_archivo)
+                    
+                    archivo.save(ruta_archivo)
+                    set_config('logo_url', nombre_archivo)
+                    flash('✅ Logo actualizado exitosamente', 'success')
+                except Exception as e:
+                    flash(f'❌ Error al subir logo: {str(e)}', 'error')
+            elif archivo and archivo.filename != '':
+                flash('❌ Formato no permitido. Use PNG, JPG, JPEG, GIF, WEBP o SVG', 'error')
+        
+        if request.form.get('eliminar_logo') == '1':
+            logo_actual = get_config('logo_url')
+            if logo_actual:
+                ruta_archivo = os.path.join(UPLOAD_FOLDER_FOTOS, logo_actual)
+                if os.path.exists(ruta_archivo):
+                    os.remove(ruta_archivo)
+                set_config('logo_url', '')
+                flash('✅ Logo eliminado', 'success')
+        
+        registrar_log(session['user_id'], 'CONFIGURACION', 'configuracion', None, 'Actualizó configuración de empresa', request.remote_addr)
+        flash('✅ Configuración guardada correctamente', 'success')
+        return redirect(url_for('configuracion'))
+    
+    logo_url = get_config('logo_url')
+    logo_tipo = get_config('logo_tipo')
+    eslogan = get_config('eslogan')
+    empresa_nombre = get_config('empresa_nombre')
+    
+    return render_template('configuracion.html', 
+                         logo_url=logo_url,
+                         logo_tipo=logo_tipo,
+                         eslogan=eslogan,
+                         empresa_nombre=empresa_nombre)
 
+# ============ RUTAS DE FOTOS ============
 @app.route('/api/fotos/<int:id>')
 @login_required
 def obtener_fotos(id):
-    """Obtiene la lista de fotos de un vehículo"""
     fotos_dir = os.path.join(UPLOAD_FOLDER_FOTOS, str(id))
     fotos = []
     if os.path.exists(fotos_dir):
         for archivo in os.listdir(fotos_dir):
-            if allowed_image(archivo):
+            if allowed_image(archivo) and archivo != get_config('logo_url'):
                 fotos.append(archivo)
     fotos.sort()
     return jsonify({'fotos': fotos})
@@ -504,7 +606,6 @@ def obtener_fotos(id):
 @login_required
 @admin_required
 def subir_fotos_multiple(id):
-    """Sube múltiples fotos para un vehículo"""
     if 'fotos' not in request.files:
         return jsonify({'success': False, 'error': 'No se seleccionaron archivos'})
     
@@ -512,12 +613,10 @@ def subir_fotos_multiple(id):
     if len(archivos) == 0:
         return jsonify({'success': False, 'error': 'No se seleccionaron archivos'})
     
-    # Crear directorio para el vehículo
     vehiculo_dir = os.path.join(UPLOAD_FOLDER_FOTOS, str(id))
     os.makedirs(vehiculo_dir, exist_ok=True)
     
-    # Contar fotos actuales
-    fotos_actuales = [f for f in os.listdir(vehiculo_dir) if allowed_image(f)]
+    fotos_actuales = [f for f in os.listdir(vehiculo_dir) if allowed_image(f) and f != get_config('logo_url')]
     
     if len(fotos_actuales) + len(archivos) > 12:
         return jsonify({'success': False, 'error': f'Máximo 12 fotos. Actualmente tienes {len(fotos_actuales)}'})
@@ -553,7 +652,6 @@ def subir_fotos_multiple(id):
 @login_required
 @admin_required
 def eliminar_foto_ajax(id, nombre_foto):
-    """Elimina una foto específica de un vehículo"""
     vehiculo_dir = os.path.join(UPLOAD_FOLDER_FOTOS, str(id))
     ruta_archivo = os.path.join(vehiculo_dir, nombre_foto)
     
